@@ -1,5 +1,5 @@
-# AI_Game_Recommender_System
-AI Assignment - Recommender System - Game
+# AI_Anime_Recommender_System
+AI Assignment - Recommender System - Anime
 
-steam.csv from: 
-https://www.kaggle.com/datasets/fronkongames/steam-games-dataset/data?select=games.csv
+Anime_data.csv from: 
+https://www.kaggle.com/datasets/vishalmane109/anime-recommendations-database/data
