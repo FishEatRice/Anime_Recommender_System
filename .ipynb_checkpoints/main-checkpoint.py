@@ -6,6 +6,10 @@ from bs4 import BeautifulSoup
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+# AI Detect
+from fuzzywuzzy import process
+import re
+
 # 1. 数据加载
 @st.cache_data
 def load_data():
@@ -70,6 +74,24 @@ def recommend_by_keyword(keyword, top_n=6, filter_hentai=True):
 # 6. Streamlit 页面设置
 st.set_page_config(page_title="Anime Recommender", layout="wide")
 
+# 7. 自然语言推荐
+def parse_user_query(query):
+    query = query.strip()
+
+    # 模糊匹配动漫标题
+    best_match, score, _ = process.extractOne(query, df['Title'])
+    if score > 80:  # 匹配度阈值
+        return "title", best_match
+
+    # 从 Genre 中匹配关键词
+    genres_list = set(" ".join(df['Genre']).lower().split())
+    keywords = re.findall(r'\w+', query.lower())
+    matched_keywords = [k for k in keywords if k in genres_list]
+    if matched_keywords:
+        return "keyword", matched_keywords[0]
+
+    return None, None
+
 # 初始化 session_state
 if 'recommended_count' not in st.session_state:
     st.session_state.recommended_count = 6
@@ -78,7 +100,7 @@ if 'filter_hentai' not in st.session_state:
 
 # 页面导航
 st.sidebar.title("选择页面")
-page = st.sidebar.radio("页面", ("首页", "关键词推荐", "设置"))
+page = st.sidebar.radio("页面", ("首页", "关键词推荐", "自然语言推荐", "设置"))
 
 # 设置页面
 if page == "设置":
@@ -138,6 +160,47 @@ elif page == "关键词推荐":
         if results.empty:
             st.warning("没有找到相关的动漫")
         else:
+            for row_start in range(0, len(results), 3):
+                cols = st.columns(3, gap="large")
+                for col, (_, row) in zip(cols, results.iloc[row_start:row_start + 3].iterrows()):
+                    with col:
+                        img_url = get_cover_image(row['Link'])
+                        if img_url:
+                            st.image(img_url, width=150)
+                        st.markdown(f"**[{row['Title']}]({row['Link']})**")
+                        st.write(f"⭐ {row['Rating']}")
+                        st.caption(row['Genre'])
+                st.markdown("<br><br>", unsafe_allow_html=True)
+
+elif page == "自然语言推荐":
+    st.title("🗣 自然语言动漫推荐")
+    st.write("你可以用语言输入，比如 `Toradora` 或者 `I want anime with ghost`")
+
+    user_query = st.text_input("输入一句话", "Can I having some things like Toradora")
+
+    if st.button("搜索"):
+        mode, value = parse_user_query(user_query)
+
+        if mode == "title":
+            st.info(f"检测到你想找和 **{value}** 类似的动漫")
+            results = recommend(
+                value,
+                top_n=st.session_state.get('recommended_count', 6),
+                filter_hentai=st.session_state.get('filter_hentai', True)
+            )
+        elif mode == "keyword":
+            st.info(f"检测到你想找包含 **{value}** 类型的动漫")
+            results = recommend_by_keyword(
+                value,
+                top_n=st.session_state.get('recommended_count', 6),
+                filter_hentai=st.session_state.get('filter_hentai', True)
+            )
+        else:
+            st.warning("无法理解你的请求，请尝试换个说法")
+            results = pd.DataFrame()
+
+        # 显示结果
+        if not results.empty:
             for row_start in range(0, len(results), 3):
                 cols = st.columns(3, gap="large")
                 for col, (_, row) in zip(cols, results.iloc[row_start:row_start + 3].iterrows()):
