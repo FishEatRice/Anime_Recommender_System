@@ -126,7 +126,7 @@ elif page == "关键词推荐":
     st.title("🔍 基于关键词的动漫推荐")
     st.write("输入你喜欢的类型或主题，我们将推荐相关动漫")
 
-    keyword = st.text_input("输入关键词", "战斗")
+    keyword = st.text_input("输入关键词", "Action")
 
     if st.button("推荐"):
         results = recommend_by_keyword(
