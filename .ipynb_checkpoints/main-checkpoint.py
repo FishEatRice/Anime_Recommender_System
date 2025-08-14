@@ -15,7 +15,7 @@ def load_data():
 
 df = load_data()
 
-# 2. 抓取封面图
+# 2. 获取动漫封面图
 @st.cache_data
 def get_cover_image(url):
     try:
@@ -28,40 +28,71 @@ def get_cover_image(url):
         return None
     return None
 
-# 3. 计算相似度
-@st.cache_data
-def compute_similarity():
+# 3. 相似度计算函数（传入过滤后的 df）
+@st.cache_data(show_spinner=False)
+def compute_similarity(filtered_df):
     tfidf = TfidfVectorizer(stop_words='english')
-    tfidf_matrix = tfidf.fit_transform(df['Genre'])
+    tfidf_matrix = tfidf.fit_transform(filtered_df['Genre'])
     cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
     return cosine_sim
 
-cosine_sim = compute_similarity()
+# 4. 推荐函数（按评分排序 + 正确过滤）
+def recommend(anime_title, top_n=6, filter_hentai=True):
+    if filter_hentai:
+        df_filtered = df[~df['Genre'].str.contains("Hentai", case=False, na=False)].reset_index(drop=True)
+    else:
+        df_filtered = df.reset_index(drop=True)
 
-# 4. 推荐函数（按评分排序）
-def recommend(anime_title, top_n=6):
-    if anime_title not in df['Title'].values:
+    if anime_title not in df_filtered['Title'].values:
+        st.warning(f"未找到名为 '{anime_title}' 的动漫，可能是因为该类型被过滤掉了。")
+        if anime_title in df['Title'].values:
+            st.warning("注意：该动漫原本存在，但它包含了 'Hentai' 类型，因此被过滤掉。")
         return pd.DataFrame()
-    idx = df.index[df['Title'] == anime_title][0]
-    sim_scores = list(enumerate(cosine_sim[idx]))
-    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
-    sim_scores = sim_scores[1:top_n+1]
-    anime_indices = [i[0] for i in sim_scores]
-    return df.iloc[anime_indices][['Title', 'Genre', 'Rating', 'Link']].sort_values(by='Rating', ascending=False)
 
-# 5. 关键词推荐函数
-def recommend_by_keyword(keyword, top_n=6):
-    filtered_df = df[df['Genre'].str.contains(keyword, case=False, na=False)]  # 按关键词筛选
+    cosine_sim_filtered = compute_similarity(df_filtered)
+    idx = df_filtered[df_filtered['Title'] == anime_title].index[0]
+    sim_scores = list(enumerate(cosine_sim_filtered[idx]))
+    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
+    sim_scores = sim_scores[1:top_n + 1]
+    anime_indices = [i[0] for i in sim_scores]
+    return df_filtered.iloc[anime_indices][['Title', 'Genre', 'Rating', 'Link']].sort_values(by='Rating', ascending=False)
+
+# 5. 关键词推荐函数（不使用相似度）
+def recommend_by_keyword(keyword, top_n=6, filter_hentai=True):
+    if filter_hentai:
+        filtered_df = df[~df['Genre'].str.contains("Hentai", case=False, na=False)]
+    else:
+        filtered_df = df
+    
+    filtered_df = filtered_df[filtered_df['Genre'].str.contains(keyword, case=False, na=False)]
     return filtered_df[['Title', 'Genre', 'Rating', 'Link']].sort_values(by='Rating', ascending=False).head(top_n)
 
-# 6. Streamlit UI
+# 6. Streamlit 页面设置
 st.set_page_config(page_title="Anime Recommender", layout="wide")
+
+# 初始化 session_state
+if 'recommended_count' not in st.session_state:
+    st.session_state.recommended_count = 6
+if 'filter_hentai' not in st.session_state:
+    st.session_state.filter_hentai = True
 
 # 页面导航
 st.sidebar.title("选择页面")
-page = st.sidebar.radio("页面", ("首页", "关键词推荐"))
+page = st.sidebar.radio("页面", ("首页", "关键词推荐", "设置"))
 
-if page == "首页":
+# 设置页面
+if page == "设置":
+    st.title("⚙️ 设置")
+    st.write("自定义推荐数量和是否过滤 Hentai 类型")
+
+    recommended_count = st.slider("每次推荐数量", min_value=3, max_value=21, value=st.session_state.recommended_count, step=3)
+    st.session_state.recommended_count = recommended_count
+
+    filter_hentai = st.checkbox("过滤 Hentai 类型动漫", value=st.session_state.filter_hentai)
+    st.session_state.filter_hentai = filter_hentai
+
+# 首页推荐
+elif page == "首页":
     st.title("🎯 Anime Recommender System")
     st.write("选择你喜欢的动漫，系统会推荐相似的作品（按评分排序）")
 
@@ -69,13 +100,18 @@ if page == "首页":
     selected_anime = st.selectbox("选择动漫", anime_list)
 
     if st.button("推荐"):
-        results = recommend(selected_anime, top_n=6)
+        results = recommend(
+            selected_anime,
+            top_n=st.session_state.get('recommended_count', 6),
+            filter_hentai=st.session_state.get('filter_hentai', True)
+        )
+
         if results.empty:
-            st.warning("没找到相关动漫")
+            st.warning("未找到相关动漫")
         else:
             for row_start in range(0, len(results), 3):
-                cols = st.columns(3, gap="large")  # 三列且间距大
-                for col, (_, row) in zip(cols, results.iloc[row_start:row_start+3].iterrows()):
+                cols = st.columns(3, gap="large")
+                for col, (_, row) in zip(cols, results.iloc[row_start:row_start + 3].iterrows()):
                     with col:
                         img_url = get_cover_image(row['Link'])
                         if img_url:
@@ -83,22 +119,28 @@ if page == "首页":
                         st.markdown(f"**[{row['Title']}]({row['Link']})**")
                         st.write(f"⭐ {row['Rating']}")
                         st.caption(row['Genre'])
-                st.markdown("<br><br>", unsafe_allow_html=True)  # 每行底部留空白
+                st.markdown("<br><br>", unsafe_allow_html=True)
 
+# 关键词推荐
 elif page == "关键词推荐":
     st.title("🔍 基于关键词的动漫推荐")
-    st.write("输入你喜欢的类型或主题，我们将推荐相关动漫。")
+    st.write("输入你喜欢的类型或主题，我们将推荐相关动漫")
 
-    keyword = st.text_input("输入关键词", "战斗")  # 默认为 "战斗"
-    
+    keyword = st.text_input("输入关键词", "战斗")
+
     if st.button("推荐"):
-        results = recommend_by_keyword(keyword, top_n=6)
+        results = recommend_by_keyword(
+            keyword,
+            top_n=st.session_state.get('recommended_count', 6),
+            filter_hentai=st.session_state.get('filter_hentai', True)
+        )
+
         if results.empty:
             st.warning("没有找到相关的动漫")
         else:
             for row_start in range(0, len(results), 3):
-                cols = st.columns(3, gap="large")  # 三列且间距大
-                for col, (_, row) in zip(cols, results.iloc[row_start:row_start+3].iterrows()):
+                cols = st.columns(3, gap="large")
+                for col, (_, row) in zip(cols, results.iloc[row_start:row_start + 3].iterrows()):
                     with col:
                         img_url = get_cover_image(row['Link'])
                         if img_url:
@@ -106,4 +148,4 @@ elif page == "关键词推荐":
                         st.markdown(f"**[{row['Title']}]({row['Link']})**")
                         st.write(f"⭐ {row['Rating']}")
                         st.caption(row['Genre'])
-                st.markdown("<br><br>", unsafe_allow_html=True)  # 每行底部留空白
+                st.markdown("<br><br>", unsafe_allow_html=True)
