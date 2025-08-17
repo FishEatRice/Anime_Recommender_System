@@ -106,6 +106,13 @@ if 'filter_hentai' not in st.session_state:
     # Default close
     st.session_state.filter_hentai = True
 
-# Page Header
-st.
+# Page Navigation
+pages = [
+        st.Page("test1.py", title="test 1"),
+        st.Page("test2.py", title="test 2")
+    ]
+pg = st.navigation(pages, position="top", expanded=True)
+pg.run()
+
+
         
