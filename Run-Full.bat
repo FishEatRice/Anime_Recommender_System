@@ -10,6 +10,6 @@ echo Start Application
 
 cls
 
-streamlit run on.py
+streamlit run Full.py
 
 pause
