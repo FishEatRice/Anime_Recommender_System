@@ -8,4 +8,5 @@ def load_data(path="../Anime_data.csv"):
     df['Genre'] = df['Genre'].apply(lambda x: ' '.join(ast.literal_eval(x))
                                     if pd.notnull(x)
                                     else '')
+    
     return df

@@ -11,6 +11,7 @@ def get_anime_picture(url):
 
         if img_tag:
             return img_tag.get("data-src") or img_tag.get("src")
+        else:
+            return "picture/picture_not_found.jpg"
     except Exception:
-        return None
-    return None
+        return "picture/picture_not_found.jpg"
