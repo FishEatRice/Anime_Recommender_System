@@ -64,7 +64,7 @@ if st.session_state.recommended_count != recommended_count:
 
 # Rating Filter
 st.markdown("<br>", unsafe_allow_html=True)
-col3, col4 = st.columns([8, 1])
+col3, col4, col5, col6 = st.columns([7, 0.7, 0.7, 1])
 with col3:
     filter_rating = st.slider(
         "Rating Filter (0 - Show All) (10 - Will be harder to find anime)",
@@ -75,6 +75,20 @@ with col3:
     )
 
 with col4:
+    if st.button("➖", key="plus_filter_rating"):
+        if st.session_state.filter_rating > 0:
+            filter_rating = st.session_state.filter_rating - 1.0
+        else:
+            st.toast("Rating Filter cannot be lower then 0")
+
+with col5:
+    if st.button("➕", key="minus_filter_rating"):
+        if st.session_state.filter_rating < 10.0:
+            filter_rating = st.session_state.filter_rating + 1.0
+        else:
+            st.toast("Rating Filter cannot be more then 10")
+
+with col6:
     if st.button("Reset", key="reset_filter_rating"):
         filter_rating = 0.0
 

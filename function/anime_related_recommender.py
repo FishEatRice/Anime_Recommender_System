@@ -11,11 +11,16 @@ def compute_similarity(filtered_df):
 
 def recommend(df, anime_title, result_count=6, filter_18=True, filter_rating=0.0):
     if filter_18:
-        df_filtered_18 = df[~df['18+']]['Title'].unique()
+        df_filtered_18 = df[~df['18+']].reset_index(drop=True)
     else:
         df_filtered_18 = df.reset_index(drop=True)
 
     df_filtered_rating = df_filtered_18[df_filtered_18['Rating'] >= filter_rating].reset_index(drop=True)
+
+    if anime_title not in df_filtered_rating['Title'].values:
+        anime_row = df[df['Title'] == anime_title]
+        if not anime_row.empty:
+            df_filtered_rating = pd.concat([df_filtered_rating, anime_row]).reset_index(drop=True)
 
     if anime_title not in df_filtered_rating['Title'].values:
         return pd.DataFrame()
@@ -25,4 +30,5 @@ def recommend(df, anime_title, result_count=6, filter_18=True, filter_rating=0.0
     sim_scores = list(enumerate(cosine_sim_filtered[idx]))
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[1:result_count+1]
     indices = [i[0] for i in sim_scores]
+    
     return df_filtered_rating.iloc[indices][['Title','Genre','Rating','Link']].sort_values(by='Rating', ascending=False)

@@ -9,6 +9,13 @@ session_state_reset()
 
 df = load_data()
 
+def anime_in_18(row, filter_status):
+    title = row['Title']
+    if not filter_status and row['18+']:
+        return f"[🔞18+] {title}"
+    else:
+        return title
+
 st.title("Anime Recommender System")
 st.write("Please choose the anime that you like, system will recommended a related anime.")
 
@@ -24,10 +31,15 @@ st.write("Current session state:", {
 # Filter 18+
 if st.session_state.filter_18:
     anime_list = df[~df['18+']]['Title'].unique()
+else:
+    anime_list = [anime_in_18(row, st.session_state.filter_18) for _, row in df.iterrows()]
 
 selected_anime = st.selectbox("Choose One Anime", anime_list)
 
 if st.button("Recommend"):
+
+    selected_anime = selected_anime.replace("[🔞18+] ", "") 
+
     results = recommend(
         df,
         selected_anime,
@@ -38,10 +50,9 @@ if st.button("Recommend"):
 
     if results.empty:
         st.warning("Cannot found any related anime")
-
-    if st.session_state.filter_rating > 0.0:
-        st.error("Try to low the rating filter")
-
+        if st.session_state.filter_rating > 0.0:
+            st.error("Try to low the rating filter")
+            
     else:
         for row_start in range(0, len(results), 3):
             cols = st.columns(3, gap="medium")
