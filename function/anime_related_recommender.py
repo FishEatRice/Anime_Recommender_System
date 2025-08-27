@@ -9,13 +9,13 @@ def compute_similarity(filtered_df):
     tfidf_matrix = tfidf.fit_transform(filtered_df['Genre'])
     return cosine_similarity(tfidf_matrix, tfidf_matrix)
 
-def recommend(df, anime_title, result_count=6, filter_hentai=True, filter_rating=0.0):
-    if filter_hentai:
-        df_filtered_hentai = df[~df['Genre'].str.contains("Hentai", case=False, na=False)].reset_index(drop=True)
+def recommend(df, anime_title, result_count=6, filter_18=True, filter_rating=0.0):
+    if filter_18:
+        df_filtered_18 = df[~df['18+']]['Title'].unique()
     else:
-        df_filtered_hentai = df.reset_index(drop=True)
+        df_filtered_18 = df.reset_index(drop=True)
 
-    df_filtered_rating = df_filtered_hentai[df_filtered_hentai['Rating'] >= filter_rating].reset_index(drop=True)
+    df_filtered_rating = df_filtered_18[df_filtered_18['Rating'] >= filter_rating].reset_index(drop=True)
 
     if anime_title not in df_filtered_rating['Title'].values:
         return pd.DataFrame()

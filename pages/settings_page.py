@@ -7,7 +7,7 @@ session_state_reset()
     
 st.write("Current session state:", {
     "recommended_count": st.session_state.recommended_count,
-    "filter_hentai": st.session_state.filter_hentai,
+    "filter_18": st.session_state.filter_18,
     "filter_rating": st.session_state.filter_rating,
     "fast_search": st.session_state.fast_search,
 })
@@ -17,19 +17,19 @@ st.title("Settings")
 # Reset all filters button
 if st.button("🔄 Reset All Filters"):
     st.session_state.recommended_count = 9
-    st.session_state.filter_hentai = True
+    st.session_state.filter_18 = False
     st.session_state.filter_rating = 0.00
     st.session_state.fast_search = False
     rerun()
     
-# Hentai Filter
+# 18+ Filter
 st.markdown("<br>", unsafe_allow_html=True)
-filter_hentai = st.checkbox(
-    "'Hentai' related Anime Filter",
-    value=st.session_state.get('filter_hentai', True)
+filter_18 = st.checkbox(
+    "'18+' related Anime Filter",
+    value=st.session_state.get('filter_18', True)
 )
-if st.session_state.filter_hentai != filter_hentai:
-    st.session_state.filter_hentai = filter_hentai
+if st.session_state.filter_18 != filter_18:
+    st.session_state.filter_18 = filter_18
     rerun()
 
 # Fast Search

@@ -16,14 +16,14 @@ anime_list = df['Title'].dropna().unique()
 
 st.write("Current session state:", {
     "recommended_count": st.session_state.recommended_count,
-    "filter_hentai": st.session_state.filter_hentai,
+    "filter_18": st.session_state.filter_18,
     "filter_rating": st.session_state.filter_rating,
     "fast_search": st.session_state.fast_search,
 })
 
-# Filter hentai
-if st.session_state.filter_hentai:
-    anime_list = df[~df['Genre'].str.contains("Hentai", case=False, na=False)]['Title'].unique()
+# Filter 18+
+if st.session_state.filter_18:
+    anime_list = df[~df['18+']]['Title'].unique()
 
 selected_anime = st.selectbox("Choose One Anime", anime_list)
 
@@ -32,7 +32,7 @@ if st.button("Recommend"):
         df,
         selected_anime,
         result_count    = st.session_state.get('recommended_count', 9),
-        filter_hentai   = st.session_state.get('filter_hentai', True),
+        filter_18   = st.session_state.get('filter_18', True),
         filter_rating   = st.session_state.get('filter_rating', 0.0)
     )
 
