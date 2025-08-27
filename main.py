@@ -14,6 +14,13 @@ st.write("Please choose the anime that you like, system will recommended a relat
 
 anime_list = df['Title'].dropna().unique()
 
+st.write("Current session state:", {
+    "recommended_count": st.session_state.recommended_count,
+    "filter_hentai": st.session_state.filter_hentai,
+    "filter_rating": st.session_state.filter_rating,
+    "fast_search": st.session_state.fast_search,
+})
+
 # Filter hentai
 if st.session_state.filter_hentai:
     anime_list = df[~df['Genre'].str.contains("Hentai", case=False, na=False)]['Title'].unique()
@@ -26,20 +33,24 @@ if st.button("Recommend"):
         selected_anime,
         result_count    = st.session_state.get('recommended_count', 9),
         filter_hentai   = st.session_state.get('filter_hentai', True),
-        filter_rating   = st.session_state.get('filter_rating', 7.50)
+        filter_rating   = st.session_state.get('filter_rating', 0.0)
     )
 
     if results.empty:
         st.warning("Cannot found any related anime")
+
+    if st.session_state.filter_rating > 0.0:
+        st.error("Try to low the rating filter")
 
     else:
         for row_start in range(0, len(results), 3):
             cols = st.columns(3, gap="medium")
             for col, (_, row) in zip(cols, results.iloc[row_start:row_start + 3].iterrows()):
                 with col:
-                    img_url = get_anime_picture(row['Link'])
-                    if img_url:
-                        st.image(img_url, width=150)
+                    if st.session_state.fast_search != True:
+                        img_url = get_anime_picture(row['Link'])
+                        if img_url:
+                            st.image(img_url, width=150)
                     
                     st.markdown(f"[{row['Title']}]({row['Link']})")
                     st.write(f"⭐ {row['Rating']} / 10.0")
