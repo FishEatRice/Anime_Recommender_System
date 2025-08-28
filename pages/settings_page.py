@@ -78,6 +78,11 @@ with col4:
     if st.button("➖", key="plus_filter_rating"):
         if st.session_state.filter_rating > 0:
             filter_rating = st.session_state.filter_rating - 1.0
+            
+            if filter_rating < 0:
+                st.toast("Rating Filter cannot be lower then 0")
+                filter_rating = 0.0
+            
         else:
             st.toast("Rating Filter cannot be lower then 0")
 
@@ -85,6 +90,11 @@ with col5:
     if st.button("➕", key="minus_filter_rating"):
         if st.session_state.filter_rating < 10.0:
             filter_rating = st.session_state.filter_rating + 1.0
+
+            if filter_rating > 10.0:
+                st.toast("Rating Filter cannot be more then 10")
+                filter_rating = 10.0
+
         else:
             st.toast("Rating Filter cannot be more then 10")
 
