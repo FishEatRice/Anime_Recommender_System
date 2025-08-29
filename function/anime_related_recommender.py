@@ -29,12 +29,22 @@ def recommend(df, anime_title, result_count=6, filter_18=False, filter_rating=0.
     indices = [i[0] for i in sim_scores]
 
     df_filtered.shape
-    C = df_filtered['Rating'].mean()
-    m = df_filtered['Rating'].quantile(0.90)
-
-    v = df_filtered['Votes']
-    R = df_filtered['Rating']
-
-    df_filtered['WeightedRating'] = (v / (v + m) * R) + (v / (v + m) * C)
     
-    return df_filtered.iloc[indices][['Title','Genre','Rating','Link','WeightedRating','Votes']].sort_values(by='WeightedRating', ascending=False), df_filtered.iloc[[idx]][['Title', 'Genre', 'Rating', 'Link', 'Votes']]
+    # Calculate global average and threshold
+    C = df_filtered['Rating'].mean()
+    m = df_filtered['Votes'].quantile(0.30)
+
+    recs = df_filtered.iloc[indices].copy()
+
+    # Filter out low-vote animes (less than m)
+    recs = recs[recs['Votes'] >= 1]  # Optional filter for realism
+
+    v = recs['Votes']
+    R = recs['Rating']
+    recs['WeightedRating'] = (v / (v + m)) * R + (m / (v + m)) * C
+
+    # Sort by weighted score
+    recs = recs.sort_values(by='WeightedRating', ascending=False)
+
+
+    return recs[['Title','Genre','Rating','Link','WeightedRating','Votes']].sort_values(by='WeightedRating', ascending=False), df_filtered.iloc[[idx]][['Title', 'Genre', 'Rating', 'Link', 'Votes']]

@@ -95,5 +95,5 @@ if recommend_clicked:
                             st.image(img_url, width=150)
                     
                     st.markdown(f"[{row['Title']}]({row['Link']})")
-                    st.write(f"⭐ {row['Rating']} / 10.0 ( {int(row['Votes'])} 👥)")
+                    st.write(f"⭐ {row['Rating']} / 10.0 ( {int(row['Votes'])} 👥) — Weighted: {row['WeightedRating']:.2f}")
                     st.caption(row['Genre'])
