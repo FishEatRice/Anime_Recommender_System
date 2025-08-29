@@ -75,9 +75,10 @@ if recommend_clicked:
         link = anime_select_details.iloc[0]['Link']
         rating = anime_select_details.iloc[0]['Rating']
         genre = anime_select_details.iloc[0]['Genre']
+        votes = anime_select_details.iloc[0]['Votes']
 
         st.markdown(f"[{title}]({link})")
-        st.write(f"⭐ {rating:.2f} / 10.0")
+        st.write(f"⭐ {rating:.2f} / 10.0 ( {int(votes)} 👥)")
         st.caption(genre)
 
         st.markdown("---")
@@ -94,5 +95,5 @@ if recommend_clicked:
                             st.image(img_url, width=150)
                     
                     st.markdown(f"[{row['Title']}]({row['Link']})")
-                    st.write(f"⭐ {row['Rating']} / 10.0")
+                    st.write(f"⭐ {row['Rating']} / 10.0 ( {int(row['Votes'])} 👥)")
                     st.caption(row['Genre'])
