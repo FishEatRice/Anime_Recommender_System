@@ -25,8 +25,8 @@ if st.button("🔄 Reset All Filters"):
 # 18+ Filter
 st.markdown("<br>", unsafe_allow_html=True)
 filter_18 = st.checkbox(
-    "'18+' related Anime Filter",
-    value=st.session_state.get('filter_18', True)
+    "Filter 18+ Anime",
+    value=st.session_state.get('filter_18', False)
 )
 if st.session_state.filter_18 != filter_18:
     st.session_state.filter_18 = filter_18

@@ -9,4 +9,6 @@ def load_data(path="../Anime_data.csv"):
                                     if pd.notnull(x)
                                     else '')
     
+    df = df.drop_duplicates(subset='Title', keep='first').reset_index(drop=True)
+
     return df

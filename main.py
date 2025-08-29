@@ -34,13 +34,21 @@ if st.session_state.filter_18:
 else:
     anime_list = [anime_in_18(row, st.session_state.filter_18) for _, row in df.iterrows()]
 
-selected_anime = st.selectbox("Choose One Anime", anime_list)
+col1, col2 = st.columns([4, 1])
+with col1:
+    selected_anime = st.selectbox("Choose One Anime", anime_list)
 
-if st.button("Recommend"):
+with col2:
+    st.markdown("<div style='padding-top: 28px'></div>", unsafe_allow_html=True)
+    recommend_clicked = st.button("Recommend")
+
+if recommend_clicked:
+
+    st.markdown("---")
 
     selected_anime = selected_anime.replace("[🔞18+] ", "") 
 
-    results = recommend(
+    results, anime_select_details = recommend(
         df,
         selected_anime,
         result_count    = st.session_state.get('recommended_count', 9),
@@ -48,12 +56,34 @@ if st.button("Recommend"):
         filter_rating   = st.session_state.get('filter_rating', 0.0)
     )
 
-    if results.empty:
+    if results.empty or anime_select_details.empty:
         st.warning("Cannot found any related anime")
         if st.session_state.filter_rating > 0.0:
             st.error("Try to low the rating filter")
             
     else:
+
+        st.write("Anime Selected:")
+        
+        if st.session_state.fast_search != True:
+            img_url = get_anime_picture(anime_select_details.iloc[0]['Link'])
+            if img_url:
+                st.image(img_url, width=150)
+        
+        # Anime Selected Details
+        title = anime_select_details.iloc[0]['Title']
+        link = anime_select_details.iloc[0]['Link']
+        rating = anime_select_details.iloc[0]['Rating']
+        genre = anime_select_details.iloc[0]['Genre']
+
+        st.markdown(f"[{title}]({link})")
+        st.write(f"⭐ {rating:.2f} / 10.0")
+        st.caption(genre)
+
+        st.markdown("---")
+
+        st.write("Recommend Anime:")
+
         for row_start in range(0, len(results), 3):
             cols = st.columns(3, gap="medium")
             for col, (_, row) in zip(cols, results.iloc[row_start:row_start + 3].iterrows()):
