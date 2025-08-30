@@ -64,12 +64,7 @@ if recommend_clicked:
     else:
 
         st.write("Anime Selected:")
-        
-        if st.session_state.fast_search != True:
-            img_url = get_anime_picture(anime_select_details.iloc[0]['Link'])
-            if img_url:
-                st.image(img_url, width=150)
-        
+
         # Anime Selected Details
         title = anime_select_details.iloc[0]['Title']
         link = anime_select_details.iloc[0]['Link']
@@ -77,9 +72,25 @@ if recommend_clicked:
         genre = anime_select_details.iloc[0]['Genre']
         votes = anime_select_details.iloc[0]['Votes']
 
-        st.markdown(f"[{title}]({link})")
-        st.write(f"⭐ {rating:.2f} / 10.0 ( {int(votes)} 👥)")
-        st.caption(genre)
+        if st.session_state.fast_search != True:
+            col3, col4 = st.columns([1,3])
+            
+            with col3:
+                img_url = get_anime_picture(anime_select_details.iloc[0]['Link'])
+                if img_url:
+                    st.image(img_url, width=150)
+
+            with col4:
+                st.write("")
+                st.write("")
+                st.write("")
+                st.markdown(f"[{title}]({link})")
+                st.write(f"⭐ {rating:.2f} / 10.0 ( {int(votes)} 👥)")
+                st.caption(genre)
+        else:
+            st.markdown(f"[{title}]({link})")
+            st.write(f"⭐ {rating:.2f} / 10.0 ( {int(votes)} 👥)")
+            st.caption(genre)
 
         st.markdown("---")
 
@@ -95,5 +106,8 @@ if recommend_clicked:
                             st.image(img_url, width=150)
                     
                     st.markdown(f"[{row['Title']}]({row['Link']})")
-                    st.write(f"⭐ {row['Rating']} / 10.0 ( {int(row['Votes'])} 👥) — Weighted: {row['WeightedRating']:.2f}")
+                    st.write(f"⭐ {row['Rating']} / 10.0 ( {int(row['Votes'])} 👥)")
                     st.caption(row['Genre'])
+            
+            # Make each 3 having underline in bottom
+            st.markdown("---")
