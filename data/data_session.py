@@ -13,3 +13,6 @@ def session_state_reset():
 
     if 'filter_rating' not in st.session_state:
         st.session_state.filter_rating = 0.0
+
+    if "result_page" not in st.session_state:
+        st.session_state.result_page = 0

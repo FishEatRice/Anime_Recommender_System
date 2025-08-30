@@ -1,55 +1,51 @@
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-import streamlit as st
-from data.data_filter import data_filter
 import numpy as np
 
-@st.cache_data(show_spinner=False)
-def compute_similarity(filtered_df):
-    tfidf = TfidfVectorizer(stop_words='english')
-    tfidf_matrix = tfidf.fit_transform(filtered_df['Genre'])
-    return cosine_similarity(tfidf_matrix, tfidf_matrix)
-
 def compute_weighted_rating(R, v, C, m):
+    """Bayesian weighted rating formula"""
     return ((R * v) + (C * m)) / (v + m)
 
-def recommend(df, anime_title, result_count=6, filter_18=False, filter_rating=0.0):
+def recommend(df, anime_title, filter_18=False, filter_rating=0.0):
+    # 基础过滤 (18+ / rating)
+    from data.data_filter import data_filter
     df_filtered = data_filter(df, anime_title, filter_18, filter_rating)
 
-    if anime_title not in df_filtered['Title'].values:
-        anime_row = df[df['Title'] == anime_title]
-        if not anime_row.empty:
-            df_filtered = pd.concat([df_filtered, anime_row]).reset_index(drop=True)
-
-    if anime_title not in df_filtered['Title'].values:
+    # 找出选中的 anime
+    anime_row = df[df['Title'] == anime_title]
+    if anime_row.empty:
         return pd.DataFrame(), pd.DataFrame()
 
-    cosine_sim_filtered = compute_similarity(df_filtered)
-    idx = df_filtered[df_filtered['Title'] == anime_title].index[0]
-    sim_scores = list(enumerate(cosine_sim_filtered[idx]))
-    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[1:result_count + 1]
-    indices = [i[0] for i in sim_scores]
+    # 选中 anime 的 genres (可能有多个, 逗号分隔 / 空格分隔)
+    target_genres = str(anime_row.iloc[0]['Genre']).split()
+    # 可以改成 split(",") 如果你的 Genre 是 "Music, Drama" 这种格式
 
-    # Calculate global mean and vote threshold
+    # 过滤掉不含相同 genre 的 anime
+    mask = df_filtered['Genre'].apply(
+        lambda g: any(tg.lower() in str(g).lower() for tg in target_genres)
+    )
+    df_filtered = df_filtered[mask]
+
+    if df_filtered.empty:
+        # 没有 genre 匹配，就返回原 anime info
+        return pd.DataFrame(), anime_row[['Title', 'Genre', 'Rating', 'Link', 'Votes']]
+
+    # 平均分 (全局 C) 和最少投票数 (m)
     C = df_filtered['Rating'].mean()
-    m = 1000  # Minimum votes required for weighted score
+    m = 1000  # 你可以调节这个参数
 
-    recs = df_filtered.iloc[indices].copy()
+    # 计算 Weighted Rating
+    v = df_filtered['Votes']
+    R = df_filtered['Rating']
+    df_filtered = df_filtered.copy()
+    df_filtered['WeightedRating'] = compute_weighted_rating(R, v, C, m)
 
-    # Filter out low-vote items
-    recs = recs[recs['Votes'] >= m]
+    # 去掉自己
+    df_filtered = df_filtered[df_filtered['Title'] != anime_title]
 
-    if recs.empty:
-        return pd.DataFrame(), df_filtered.iloc[[idx]][['Title', 'Genre', 'Rating', 'Link', 'Votes']]
-
-    v = recs['Votes']
-    R = recs['Rating']
-
-    # Apply Bayesian weighted rating
-    recs['WeightedRating'] = compute_weighted_rating(R, v, C, m)
-
-    recs_sorted = recs.sort_values(by='WeightedRating', ascending=False)
+    # 排序
+    recs_sorted = df_filtered.sort_values(by='WeightedRating', ascending=False)
 
     return recs_sorted[['Title', 'Genre', 'Rating', 'Link', 'WeightedRating', 'Votes']], \
-           df_filtered.iloc[[idx]][['Title', 'Genre', 'Rating', 'Link', 'Votes']]
+           anime_row[['Title', 'Genre', 'Rating', 'Link', 'Votes']]

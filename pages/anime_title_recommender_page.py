@@ -2,10 +2,7 @@ import streamlit as st
 from data.data_loader import load_data
 from data.data_catch import get_anime_picture
 from function.anime_related_recommender import recommend
-from data.data_session import session_state_reset
-
-# Format session_state
-session_state_reset()
+import pandas as pd
 
 df = load_data()
 
@@ -43,7 +40,6 @@ with col2:
     recommend_clicked = st.button("Recommend")
 
 if recommend_clicked:
-
     st.markdown("---")
 
     selected_anime = selected_anime.replace("[🔞18+] ", "") 
@@ -51,18 +47,15 @@ if recommend_clicked:
     results, anime_select_details = recommend(
         df,
         selected_anime,
-        result_count    = st.session_state.get('recommended_count', 9),
         filter_18   = st.session_state.get('filter_18', True),
         filter_rating   = st.session_state.get('filter_rating', 0.0)
     )
 
     if results.empty or anime_select_details.empty:
-        st.warning("Cannot found any related anime")
+        st.warning("Cannot find any related anime")
         if st.session_state.filter_rating > 0.0:
-            st.error("Try to low the rating filter")
-            
+            st.error("Try lowering the rating filter")
     else:
-
         st.write("Anime Selected:")
 
         # Anime Selected Details
@@ -71,6 +64,9 @@ if recommend_clicked:
         rating = anime_select_details.iloc[0]['Rating']
         genre = anime_select_details.iloc[0]['Genre']
         votes = anime_select_details.iloc[0]['Votes']
+
+        votes_display = 0 if pd.isna(votes) else int(votes)
+        rating = 0.0 if pd.isna(rating) else rating
 
         if st.session_state.fast_search != True:
             col3, col4 = st.columns([1,3])
@@ -85,29 +81,50 @@ if recommend_clicked:
                 st.write("")
                 st.write("")
                 st.markdown(f"[{title}]({link})")
-                st.write(f"⭐ {rating:.2f} / 10.0 ( {int(votes)} 👥)")
+                st.write(f"⭐ {rating:.2f} / 10.0 ( {votes_display} 👥)")
                 st.caption(genre)
         else:
             st.markdown(f"[{title}]({link})")
-            st.write(f"⭐ {rating:.2f} / 10.0 ( {int(votes)} 👥)")
+            st.write(f"⭐ {rating:.2f} / 10.0 ( {votes_display} 👥)")
             st.caption(genre)
 
         st.markdown("---")
 
-        st.write("Recommend Anime:")
+        per_page = st.session_state.get('recommended_count', 9)
+        start = st.session_state.result_page * per_page
+        end = start + per_page
+        page_results = results.iloc[start:end]
 
-        for row_start in range(0, len(results), 3):
+        st.write(f"Recommend Anime:")
+
+        # Show only current page
+        for row_start in range(0, len(page_results), 3):
             cols = st.columns(3, gap="medium")
-            for col, (_, row) in zip(cols, results.iloc[row_start:row_start + 3].iterrows()):
+            for col, (_, row) in zip(cols, page_results.iloc[row_start:row_start+3].iterrows()):
                 with col:
                     if st.session_state.fast_search != True:
                         img_url = get_anime_picture(row['Link'])
                         if img_url:
                             st.image(img_url, width=150)
-                    
                     st.markdown(f"[{row['Title']}]({row['Link']})")
                     st.write(f"⭐ {row['Rating']} / 10.0 ( {int(row['Votes'])} 👥)")
                     st.caption(row['Genre'])
-            
-            # Make each 3 having underline in bottom
-            st.markdown("---")
+
+        st.markdown("---")
+
+        # Navigation buttons
+        col5, col6, col7 = st.columns([1,2,1])
+        with col5:
+            if st.button("⬅️ Previous Page") and st.session_state.result_page > 0:
+                st.session_state.result_page -= 1
+                st.experimental_rerun()
+            else:
+                st.write("")
+        
+        with col6:
+            st.markdown(f"<div style='text-align: center; font-size: 18px; padding-top: 10px'>{start+1} - {min(end, len(results))} of {len(results)}</div>", unsafe_allow_html=True)
+
+        with col7:
+            if st.button("Next Page ➡️") and end < len(results):
+                st.session_state.result_page += 1
+                st.experimental_rerun()
