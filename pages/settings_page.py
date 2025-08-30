@@ -4,7 +4,7 @@ from data.data_session import session_state_reset
 
 # Format session_state
 session_state_reset()
-    
+
 st.write("Current session state:", {
     "recommended_count": st.session_state.recommended_count,
     "filter_18": st.session_state.filter_18,
@@ -21,7 +21,7 @@ if st.button("🔄 Reset All Filters"):
     st.session_state.filter_rating = 0.00
     st.session_state.fast_search = False
     rerun()
-    
+
 # 18+ Filter
 st.markdown("<br>", unsafe_allow_html=True)
 filter_18 = st.checkbox(
@@ -57,7 +57,7 @@ with col1:
 with col2:
     if st.button("Reset", key="reset_result_count"):
         recommended_count = 9
-        
+
 if st.session_state.recommended_count != recommended_count:
     st.session_state.recommended_count = recommended_count
     rerun()
@@ -71,20 +71,19 @@ with col3:
         min_value=0.0,
         max_value=10.0,
         step=0.01,
-        value=st.session_state.filter_rating, 
+        value=st.session_state.filter_rating,
     )
 
 with col4:
     if st.button("➖", key="plus_filter_rating"):
         if st.session_state.filter_rating > 0:
             filter_rating = st.session_state.filter_rating - 1.0
-            
+
             if filter_rating < 0:
-                st.toast("Rating Filter cannot be lower then 0")
+                st.toast("Rating Filter cannot be lower than 0")
                 filter_rating = 0.0
-            
         else:
-            st.toast("Rating Filter cannot be lower then 0")
+            st.toast("Rating Filter cannot be lower than 0")
 
 with col5:
     if st.button("➕", key="minus_filter_rating"):
@@ -92,11 +91,10 @@ with col5:
             filter_rating = st.session_state.filter_rating + 1.0
 
             if filter_rating > 10.0:
-                st.toast("Rating Filter cannot be more then 10")
+                st.toast("Rating Filter cannot be more than 10")
                 filter_rating = 10.0
-
         else:
-            st.toast("Rating Filter cannot be more then 10")
+            st.toast("Rating Filter cannot be more than 10")
 
 with col6:
     if st.button("Reset", key="reset_filter_rating"):
