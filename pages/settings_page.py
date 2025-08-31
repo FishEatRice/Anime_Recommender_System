@@ -5,12 +5,13 @@ from data.data_session import session_state_reset
 # Format session_state
 session_state_reset()
 
-st.write("Current session state:", {
-    "recommended_count": st.session_state.recommended_count,
-    "filter_18": st.session_state.filter_18,
-    "filter_rating": st.session_state.filter_rating,
-    "fast_search": st.session_state.fast_search,
-})
+# st.write("Current session state:", {
+#     "recommended_count": st.session_state.recommended_count,
+#     "filter_18": st.session_state.filter_18,
+#     "filter_rating": st.session_state.filter_rating,
+#     "fast_search": st.session_state.fast_search,
+#     "result_page": st.session_state.result_page
+# })
 
 st.title("Settings")
 
