@@ -1,14 +1,10 @@
 import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
 
 def compute_weighted_rating(R, v, C, m):
     """Bayesian weighted rating formula"""
     return ((R * v) + (C * m)) / (v + m)
 
 def recommend(df, anime_title, filter_18=False, filter_rating=0.0):
-    # 基础过滤 (18+ / rating)
     from data.data_filter import data_filter
     df_filtered = data_filter(df, anime_title, filter_18, filter_rating)
 
@@ -17,35 +13,47 @@ def recommend(df, anime_title, filter_18=False, filter_rating=0.0):
     if anime_row.empty:
         return pd.DataFrame(), pd.DataFrame()
 
-    # 选中 anime 的 genres (可能有多个, 逗号分隔 / 空格分隔)
-    target_genres = str(anime_row.iloc[0]['Genre']).split()
-    # 可以改成 split(",") 如果你的 Genre 是 "Music, Drama" 这种格式
+    # 目标 anime 的 genres (多个)
+    target_genres = set(str(anime_row.iloc[0]['Genre']).replace(",", " ").split())
 
-    # 过滤掉不含相同 genre 的 anime
-    mask = df_filtered['Genre'].apply(
-        lambda g: any(tg.lower() in str(g).lower() for tg in target_genres)
-    )
-    df_filtered = df_filtered[mask]
+    # 计算每个候选和目标的 genre 相似度 (交集 / 并集, Jaccard similarity)
+    def genre_similarity(genres):
+        genres_set = set(str(genres).replace(",", " ").split())
+        if not genres_set:
+            return 0
+        return len(target_genres & genres_set) / len(target_genres | genres_set)
+
+    df_filtered = df_filtered.copy()
+    df_filtered['GenreSim'] = df_filtered['Genre'].apply(genre_similarity)
+
+    # 只保留 genre 有交集的 anime
+    df_filtered = df_filtered[df_filtered['GenreSim'] > 0]
 
     if df_filtered.empty:
-        # 没有 genre 匹配，就返回原 anime info
-        return pd.DataFrame(), anime_row[['Title', 'Genre', 'Rating', 'Link', 'Votes']]
+        return pd.DataFrame(), anime_row[['Title','Genre','Rating','Link','Votes']]
 
-    # 平均分 (全局 C) 和最少投票数 (m)
+    # 全局平均分和投票阈值
     C = df_filtered['Rating'].mean()
-    m = 1000  # 你可以调节这个参数
+    m = 1000  
 
-    # 计算 Weighted Rating
+    # Weighted Rating
     v = df_filtered['Votes']
     R = df_filtered['Rating']
-    df_filtered = df_filtered.copy()
     df_filtered['WeightedRating'] = compute_weighted_rating(R, v, C, m)
 
-    # 去掉自己
+    # 自己要排除
     df_filtered = df_filtered[df_filtered['Title'] != anime_title]
 
-    # 排序
-    recs_sorted = df_filtered.sort_values(by='WeightedRating', ascending=False)
+    # 混合分数 = α * Genre 相似度 + (1-α) * Weighted Rating (归一化后)
+    # 先归一化 WR
+    wr_min, wr_max = df_filtered['WeightedRating'].min(), df_filtered['WeightedRating'].max()
+    df_filtered['WRNorm'] = (df_filtered['WeightedRating'] - wr_min) / (wr_max - wr_min + 1e-9)
 
-    return recs_sorted[['Title', 'Genre', 'Rating', 'Link', 'WeightedRating', 'Votes']], \
-           anime_row[['Title', 'Genre', 'Rating', 'Link', 'Votes']]
+    alpha = 0.7  # genre 相似度权重更高
+    df_filtered['HybridScore'] = alpha * df_filtered['GenreSim'] + (1-alpha) * df_filtered['WRNorm']
+
+    # 排序
+    recs_sorted = df_filtered.sort_values(by='HybridScore', ascending=False)
+
+    return recs_sorted[['Title', 'Genre', 'Rating', 'Link', 'WeightedRating', 'Votes', 'GenreSim', 'HybridScore']], \
+           anime_row[['Title','Genre','Rating','Link','Votes']]

@@ -3,6 +3,11 @@ from data.data_loader import load_data
 from data.data_catch import get_anime_picture
 from function.anime_related_recommender import recommend
 import pandas as pd
+from data.data_session import session_state_reset
+from streamlit.commands.execution_control import rerun
+
+# Format session_state
+session_state_reset()
 
 df = load_data()
 
@@ -23,6 +28,7 @@ st.write("Current session state:", {
     "filter_18": st.session_state.filter_18,
     "filter_rating": st.session_state.filter_rating,
     "fast_search": st.session_state.fast_search,
+    "result_page": st.session_state.result_page
 })
 
 # Filter 18+
@@ -40,6 +46,9 @@ with col2:
     recommend_clicked = st.button("Recommend")
 
 if recommend_clicked:
+    # refresh page
+    st.session_state.result_page = 0
+
     st.markdown("---")
 
     selected_anime = selected_anime.replace("[🔞18+] ", "") 
@@ -109,15 +118,14 @@ if recommend_clicked:
                     st.markdown(f"[{row['Title']}]({row['Link']})")
                     st.write(f"⭐ {row['Rating']} / 10.0 ( {int(row['Votes'])} 👥)")
                     st.caption(row['Genre'])
-
-        st.markdown("---")
+            st.markdown("---")
 
         # Navigation buttons
         col5, col6, col7 = st.columns([1,2,1])
         with col5:
-            if st.button("⬅️ Previous Page") and st.session_state.result_page > 0:
-                st.session_state.result_page -= 1
-                st.experimental_rerun()
+            if st.session_state.result_page > 0:
+                if st.button("⬅️ Previous Page", on_click=lambda: st.session_state.result_page - 1):
+                    pass # The callback handles the state change
             else:
                 st.write("")
         
@@ -125,6 +133,7 @@ if recommend_clicked:
             st.markdown(f"<div style='text-align: center; font-size: 18px; padding-top: 10px'>{start+1} - {min(end, len(results))} of {len(results)}</div>", unsafe_allow_html=True)
 
         with col7:
-            if st.button("Next Page ➡️") and end < len(results):
-                st.session_state.result_page += 1
-                st.experimental_rerun()
+            if end < len(results):
+                st.button("Next Page ➡️", on_click=lambda: st.session_state.result_page + 1)
+            else:
+                st.write("")
