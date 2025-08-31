@@ -19,6 +19,8 @@ def anime_in_18(row, filter_status):
     else:
         return title
 
+scroll_to_here(0, key="top")
+
 st.title("Anime Recommender System")
 st.write("Please choose the anime that you like, system will recommended a related anime.")
 
@@ -132,7 +134,7 @@ if not st.session_state.results.empty and not st.session_state.anime_select_deta
     with col5:
         if st.session_state.result_page > 0:
             if st.button("⬅️ Previous Page"):
-                scroll_to_here(0, key='top')
+                # scroll_to_here(key='top')
                 st.session_state.result_page -= 1
                 rerun()
         else:
@@ -144,7 +146,7 @@ if not st.session_state.results.empty and not st.session_state.anime_select_deta
     with col7:
         if end < len(results):
             if st.button("Next Page ➡️"):
-                scroll_to_here(0, key='top')
+                # scroll_to_here(key='top')
                 st.session_state.result_page += 1
                 rerun()
         else:
