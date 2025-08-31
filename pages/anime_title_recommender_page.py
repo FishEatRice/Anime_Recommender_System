@@ -5,6 +5,7 @@ from function.anime_related_recommender import recommend
 import pandas as pd
 from data.data_session import session_state_reset
 from streamlit.commands.execution_control import rerun
+from streamlit_scroll_to_top import scroll_to_here
 
 # Format session_state
 session_state_reset()
@@ -46,11 +47,12 @@ with col2:
     recommend_clicked = st.button("Recommend")
 
 if recommend_clicked:
-    # refresh page
+
     st.session_state.result_page = 0
+    st.session_state.results = pd.DataFrame()
+    st.session_state.anime_select_details = pd.DataFrame()
 
     st.markdown("---")
-
     selected_anime = selected_anime.replace("[🔞18+] ", "") 
 
     results, anime_select_details = recommend(
@@ -60,80 +62,92 @@ if recommend_clicked:
         filter_rating   = st.session_state.get('filter_rating', 0.0)
     )
 
-    if results.empty or anime_select_details.empty:
-        st.warning("Cannot find any related anime")
-        if st.session_state.filter_rating > 0.0:
-            st.error("Try lowering the rating filter")
-    else:
-        st.write("Anime Selected:")
+    st.session_state.results = results
+    st.session_state.anime_select_details = anime_select_details
+    # ---
 
-        # Anime Selected Details
-        title = anime_select_details.iloc[0]['Title']
-        link = anime_select_details.iloc[0]['Link']
-        rating = anime_select_details.iloc[0]['Rating']
-        genre = anime_select_details.iloc[0]['Genre']
-        votes = anime_select_details.iloc[0]['Votes']
+if not st.session_state.results.empty and not st.session_state.anime_select_details.empty:
+# ---
+    st.write("Anime Selected:")
 
-        votes_display = 0 if pd.isna(votes) else int(votes)
-        rating = 0.0 if pd.isna(rating) else rating
+    # Anime Selected Details
+    anime_select_details = st.session_state.anime_select_details
+    title = anime_select_details.iloc[0]['Title']
+    link = anime_select_details.iloc[0]['Link']
+    rating = anime_select_details.iloc[0]['Rating']
+    genre = anime_select_details.iloc[0]['Genre']
+    votes = anime_select_details.iloc[0]['Votes']
 
-        if st.session_state.fast_search != True:
-            col3, col4 = st.columns([1,3])
-            
-            with col3:
-                img_url = get_anime_picture(anime_select_details.iloc[0]['Link'])
-                if img_url:
-                    st.image(img_url, width=150)
+    votes_display = 0 if pd.isna(votes) else int(votes)
+    rating = 0.0 if pd.isna(rating) else rating
 
-            with col4:
-                st.write("")
-                st.write("")
-                st.write("")
-                st.markdown(f"[{title}]({link})")
-                st.write(f"⭐ {rating:.2f} / 10.0 ( {votes_display} 👥)")
-                st.caption(genre)
-        else:
+    if st.session_state.fast_search != True:
+        col3, col4 = st.columns([1,3])
+        
+        with col3:
+            img_url = get_anime_picture(anime_select_details.iloc[0]['Link'])
+            if img_url:
+                st.image(img_url, width=150)
+
+        with col4:
+            st.write("")
+            st.write("")
+            st.write("")
             st.markdown(f"[{title}]({link})")
             st.write(f"⭐ {rating:.2f} / 10.0 ( {votes_display} 👥)")
             st.caption(genre)
+    else:
+        st.markdown(f"[{title}]({link})")
+        st.write(f"⭐ {rating:.2f} / 10.0 ( {votes_display} 👥)")
+        st.caption(genre)
 
+    st.markdown("---")
+
+    per_page = st.session_state.get('recommended_count', 9)
+    start = st.session_state.result_page * per_page
+    end = start + per_page
+    
+    results = st.session_state.results
+    
+    page_results = results.iloc[start:end]
+
+    st.write(f"Recommend Anime:")
+
+    # Show only current page
+    for row_start in range(0, len(page_results), 3):
+        cols = st.columns(3, gap="medium")
+        for col, (_, row) in zip(cols, page_results.iloc[row_start:row_start+3].iterrows()):
+            with col:
+                if st.session_state.fast_search != True:
+                    img_url = get_anime_picture(row['Link'])
+                    if img_url:
+                        st.image(img_url, width=150)
+                st.markdown(f"[{row['Title']}]({row['Link']})")
+                st.write(f"⭐ {row['Rating']} / 10.0 ( {int(row['Votes'])} 👥)")
+                st.caption(row['Genre'])
         st.markdown("---")
 
-        per_page = st.session_state.get('recommended_count', 9)
-        start = st.session_state.result_page * per_page
-        end = start + per_page
-        page_results = results.iloc[start:end]
+    # Navigation buttons
+    col5, col6, col7 = st.columns([1,2,1])
+    with col5:
+        if st.session_state.result_page > 0:
+            if st.button("⬅️ Previous Page"):
+                scroll_to_here(0, key='top')
+                st.session_state.result_page -= 1
+                rerun()
+        else:
+            st.write("")
+    
+    with col6:
+        st.markdown(f"<div style='text-align: center; font-size: 18px; padding-top: 10px'>{start+1} - {min(end, len(results))} of {len(results)}</div>", unsafe_allow_html=True)
 
-        st.write(f"Recommend Anime:")
+    with col7:
+        if end < len(results):
+            if st.button("Next Page ➡️"):
+                scroll_to_here(0, key='top')
+                st.session_state.result_page += 1
+                rerun()
+        else:
+            st.write("")
 
-        # Show only current page
-        for row_start in range(0, len(page_results), 3):
-            cols = st.columns(3, gap="medium")
-            for col, (_, row) in zip(cols, page_results.iloc[row_start:row_start+3].iterrows()):
-                with col:
-                    if st.session_state.fast_search != True:
-                        img_url = get_anime_picture(row['Link'])
-                        if img_url:
-                            st.image(img_url, width=150)
-                    st.markdown(f"[{row['Title']}]({row['Link']})")
-                    st.write(f"⭐ {row['Rating']} / 10.0 ( {int(row['Votes'])} 👥)")
-                    st.caption(row['Genre'])
-            st.markdown("---")
-
-        # Navigation buttons
-        col5, col6, col7 = st.columns([1,2,1])
-        with col5:
-            if st.session_state.result_page > 0:
-                if st.button("⬅️ Previous Page", on_click=lambda: st.session_state.result_page - 1):
-                    pass # The callback handles the state change
-            else:
-                st.write("")
-        
-        with col6:
-            st.markdown(f"<div style='text-align: center; font-size: 18px; padding-top: 10px'>{start+1} - {min(end, len(results))} of {len(results)}</div>", unsafe_allow_html=True)
-
-        with col7:
-            if end < len(results):
-                st.button("Next Page ➡️", on_click=lambda: st.session_state.result_page + 1)
-            else:
-                st.write("")
+    

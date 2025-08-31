@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 
 def session_state_reset():
 
@@ -16,3 +17,9 @@ def session_state_reset():
 
     if "result_page" not in st.session_state:
         st.session_state.result_page = 0
+
+    if "results" not in st.session_state:
+        st.session_state.results = pd.DataFrame()
+
+    if "anime_select_details" not in st.session_state:
+        st.session_state.anime_select_details = pd.DataFrame()
