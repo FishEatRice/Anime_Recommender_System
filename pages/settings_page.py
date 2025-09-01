@@ -1,26 +1,32 @@
 import streamlit as st
 from streamlit.commands.execution_control import rerun
-from data.data_session import session_state_reset
+from data.data_session import session_state_format
+from data.data_session import session_state_reset_full
+from data.data_session import session_check_where
 
 # Format session_state
-session_state_reset()
+session_state_format()
 
-# st.write("Current session state:", {
-#     "recommended_count": st.session_state.recommended_count,
-#     "filter_18": st.session_state.filter_18,
-#     "filter_rating": st.session_state.filter_rating,
-#     "fast_search": st.session_state.fast_search,
-#     "result_page": st.session_state.result_page
-# })
+# Check Where
+st.session_state.where_page = "settings_page"
+session_check_where()
+
+# Display Mother Fucker State
+# Every stuck stuck stuck
+st.write("Current session state:", {
+    "recommended_count": st.session_state.recommended_count,
+    "filter_18": st.session_state.filter_18,
+    "filter_rating": st.session_state.filter_rating,
+    "fast_search": st.session_state.fast_search,
+    "title_recommender_result_page": st.session_state.title_recommender_result_page,
+    "Where Am I": st.session_state.where_page
+})
 
 st.title("Settings")
 
 # Reset all filters button
 if st.button("🔄 Reset All Filters"):
-    st.session_state.recommended_count = 9
-    st.session_state.filter_18 = False
-    st.session_state.filter_rating = 0.00
-    st.session_state.fast_search = False
+    session_state_reset_full()
     rerun()
 
 # 18+ Filter

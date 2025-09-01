@@ -1,14 +1,19 @@
 import streamlit as st
 from data.data_loader import load_data
 from data.data_catch import get_anime_picture
-from function.anime_related_recommender import recommend
 import pandas as pd
-from data.data_session import session_state_reset
+from data.data_session import session_state_format
 from streamlit.commands.execution_control import rerun
 from streamlit_scroll_to_top import scroll_to_here
+from function.anime_related_recommender import recommend
+from data.data_session import session_check_where
 
 # Format session_state
-session_state_reset()
+session_state_format()
+
+# Check Where
+st.session_state.where_page = "anime_title_recommender_page"
+session_check_where()
 
 df = load_data()
 
@@ -27,13 +32,16 @@ st.write("Please choose the anime that you like, system will recommended a relat
 
 anime_list = df['Title'].dropna().unique()
 
-# st.write("Current session state:", {
-#     "recommended_count": st.session_state.recommended_count,
-#     "filter_18": st.session_state.filter_18,
-#     "filter_rating": st.session_state.filter_rating,
-#     "fast_search": st.session_state.fast_search,
-#     "result_page": st.session_state.result_page
-# })
+# Display Mother Fucker State
+# Every stuck stuck stuck
+st.write("Current session state:", {
+    "recommended_count": st.session_state.recommended_count,
+    "filter_18": st.session_state.filter_18,
+    "filter_rating": st.session_state.filter_rating,
+    "fast_search": st.session_state.fast_search,
+    "title_recommender_result_page": st.session_state.title_recommender_result_page,
+    "Where Am I": st.session_state.where_page
+})
 
 # Filter 18+
 if st.session_state.filter_18:
@@ -51,35 +59,36 @@ with col2:
 
 if recommend_clicked:
 
-    st.session_state.result_page = 0
-    st.session_state.results = pd.DataFrame()
-    st.session_state.anime_select_details = pd.DataFrame()
+    st.session_state.title_recommender_result_page = 0
+    st.session_state.anime_title_result = 1
+    st.session_state.title_recommender_results = pd.DataFrame()
+    st.session_state.title_recommender_anime_select_details = pd.DataFrame()
 
     st.markdown("---")
     selected_anime = selected_anime.replace("[🔞18+] ", "") 
 
-    results, anime_select_details = recommend(
+    title_recommender_results, title_recommender_anime_select_details = recommend(
         df,
         selected_anime,
         filter_18   = st.session_state.get('filter_18', True),
         filter_rating   = st.session_state.get('filter_rating', 0.0)
     )
 
-    st.session_state.results = results
-    st.session_state.anime_select_details = anime_select_details
+    st.session_state.title_recommender_results = title_recommender_results
+    st.session_state.title_recommender_anime_select_details = title_recommender_anime_select_details
     # ---
 
-if not st.session_state.results.empty and not st.session_state.anime_select_details.empty:
+if not st.session_state.title_recommender_results.empty and not st.session_state.title_recommender_anime_select_details.empty:
 # ---
     st.write("Anime Selected:")
 
     # Anime Selected Details
-    anime_select_details = st.session_state.anime_select_details
-    title = anime_select_details.iloc[0]['Title']
-    link = anime_select_details.iloc[0]['Link']
-    rating = anime_select_details.iloc[0]['Rating']
-    genre = anime_select_details.iloc[0]['Genre']
-    votes = anime_select_details.iloc[0]['Votes']
+    title_recommender_anime_select_details = st.session_state.title_recommender_anime_select_details
+    title = title_recommender_anime_select_details.iloc[0]['Title']
+    link = title_recommender_anime_select_details.iloc[0]['Link']
+    rating = title_recommender_anime_select_details.iloc[0]['Rating']
+    genre = title_recommender_anime_select_details.iloc[0]['Genre']
+    votes = title_recommender_anime_select_details.iloc[0]['Votes']
 
     votes_display = 0 if pd.isna(votes) else int(votes)
     rating = 0.0 if pd.isna(rating) else rating
@@ -88,7 +97,7 @@ if not st.session_state.results.empty and not st.session_state.anime_select_deta
         col3, col4 = st.columns([1,3])
         
         with col3:
-            img_url = get_anime_picture(anime_select_details.iloc[0]['Link'])
+            img_url = get_anime_picture(title_recommender_anime_select_details.iloc[0]['Link'])
             if img_url:
                 st.image(img_url, width=150)
 
@@ -107,12 +116,12 @@ if not st.session_state.results.empty and not st.session_state.anime_select_deta
     st.markdown("---")
 
     per_page = st.session_state.get('recommended_count', 9)
-    start = st.session_state.result_page * per_page
+    start = st.session_state.title_recommender_result_page * per_page
     end = start + per_page
     
-    results = st.session_state.results
+    title_recommender_results = st.session_state.title_recommender_results
     
-    page_results = results.iloc[start:end]
+    page_results = title_recommender_results.iloc[start:end]
 
     st.write(f"Recommend Anime:")
 
@@ -133,22 +142,20 @@ if not st.session_state.results.empty and not st.session_state.anime_select_deta
     # Navigation buttons
     col5, col6, col7 = st.columns([1,2,1])
     with col5:
-        if st.session_state.result_page > 0:
+        if st.session_state.title_recommender_result_page > 0:
             if st.button("⬅️ Previous Page"):
-                st.session_state.result_page -= 1
+                st.session_state.title_recommender_result_page -= 1
                 rerun()
         else:
             st.write("")
     
     with col6:
-        st.markdown(f"<div style='text-align: center; font-size: 18px; padding-top: 10px'>{start+1} - {min(end, len(results))} of {len(results)}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='text-align: center; font-size: 18px; padding-top: 10px'>{start+1} - {min(end, len(title_recommender_results))} of {len(title_recommender_results)}</div>", unsafe_allow_html=True)
 
     with col7:
-        if end < len(results):
+        if end < len(title_recommender_results):
             if st.button("Next Page ➡️"):
-                st.session_state.result_page += 1
+                st.session_state.title_recommender_result_page += 1
                 rerun()
         else:
             st.write("")
-
-    
