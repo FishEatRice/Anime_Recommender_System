@@ -33,7 +33,7 @@ st.write("Please choose the anime that you like, system will recommended a relat
 anime_list = df['Title'].dropna().unique()
 
 # Display Mother Fucker State
-# Every stuck stuck stuck
+# Everytime stuck stuck stuck
 st.write("Current session state:", {
     "recommended_count": st.session_state.recommended_count,
     "filter_18": st.session_state.filter_18,

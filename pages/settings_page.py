@@ -12,7 +12,7 @@ st.session_state.where_page = "settings_page"
 session_check_where()
 
 # Display Mother Fucker State
-# Every stuck stuck stuck
+# Everytime stuck stuck stuck
 st.write("Current session state:", {
     "recommended_count": st.session_state.recommended_count,
     "filter_18": st.session_state.filter_18,
