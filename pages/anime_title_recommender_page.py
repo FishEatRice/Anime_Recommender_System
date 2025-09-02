@@ -5,32 +5,17 @@ import pandas as pd
 from data.data_session import session_state_format
 from streamlit.commands.execution_control import rerun
 from streamlit_scroll_to_top import scroll_to_here
-from function.anime_related_recommender import recommend
+from function.anime_title_related_recommender import recommend
 from data.data_session import session_check_where
 
 # Format session_state
 session_state_format()
 
+df = load_data()
+
 # Check Where
 st.session_state.where_page = "anime_title_recommender_page"
 session_check_where()
-
-df = load_data()
-
-def anime_in_18(row, filter_status):
-    title = row['Title']
-    if not filter_status and row['18+']:
-        return f"[🔞18+] {title}"
-    else:
-        return title
-
-# To Top every time refresh
-scroll_to_here(0, key="top")
-
-st.title("Anime Recommender System")
-st.write("Please choose the anime that you like, system will recommended a related anime.")
-
-anime_list = df['Title'].dropna().unique()
 
 # Display Mother Fucker State
 # Everytime stuck stuck stuck
@@ -42,6 +27,21 @@ st.write("Current session state:", {
     "title_recommender_result_page": st.session_state.title_recommender_result_page,
     "Where Am I": st.session_state.where_page
 })
+
+# To Top every time refresh
+scroll_to_here(0, key="top")
+
+st.title("Anime Recommender System")
+st.write("Please choose the anime that you like, system will recommended a related anime.")
+
+anime_list = df['Title'].dropna().unique()
+
+def anime_in_18(row, filter_status):
+    title = row['Title']
+    if not filter_status and row['18+']:
+        return f"[🔞18+] {title}"
+    else:
+        return title
 
 # Filter 18+
 if st.session_state.filter_18:
@@ -107,11 +107,16 @@ if not st.session_state.title_recommender_results.empty and not st.session_state
             st.write("")
             st.markdown(f"[{title}]({link})")
             st.write(f"⭐ {rating:.2f} / 10.0 ( {votes_display} 👥)")
-            st.caption(genre)
+            
+            # To Genre Recommender Direct
+            genres = (genre).split()
+            links = [f"[{g}](anime_genre_recommender_page?genre={g})" for g in genres]
+            st.caption(" | ".join(links))
     else:
-        st.markdown(f"[{title}]({link})")
-        st.write(f"⭐ {rating:.2f} / 10.0 ( {votes_display} 👥)")
-        st.caption(genre)
+        # To Genre Recommender Direct
+        genres = (genre).split()
+        links = [f"[{g}](anime_genre_recommender_page?genre={g})" for g in genres]
+        st.caption(" | ".join(links))
 
     st.markdown("---")
 
@@ -136,7 +141,11 @@ if not st.session_state.title_recommender_results.empty and not st.session_state
                         st.image(img_url, width=150)
                 st.markdown(f"[{row['Title']}]({row['Link']})")
                 st.write(f"⭐ {row['Rating']} / 10.0 ( {int(row['Votes'])} 👥)")
-                st.caption(row['Genre'])
+                
+                # To Genre Recommender Direct
+                genres = row['Genre'].split()
+                links = [f"[{g}](anime_genre_recommender_page?genre={g})" for g in genres]
+                st.caption(" | ".join(links))
         st.markdown("---")
 
     # Navigation buttons
