@@ -48,31 +48,51 @@ genre_list = (
 genre_list = [g for g in genre_list if isinstance(g, str)]
 genre_list = sorted(genre_list)
 
-# Let user pick how many genres
+# Get URL
+query_params = st.query_params
+url_genre = 0
+if "genre" in query_params:
+    url_genre = query_params.get_all("genre")
+    url_genre = [g for g in url_genre if g in genre_list]
+    selected_genres = url_genre.copy()
+else:
+    selected_genres = []
+
+# Number of genre that user want, get URL as default or 1
 num_genres = st.number_input(
     "How many genres do you want to choose?",
     min_value=1,
     max_value=5,
-    value=1, 
+    value=len(selected_genres) if selected_genres else 1,
     step=1
 )
 
-selected_genres = []
+# If having extra empty during adding by user
+selected_genres = selected_genres[:num_genres]
+while len(selected_genres) < num_genres:
+    selected_genres.append(None)
+
+final_genres = []
 for i in range(num_genres):
+    available_genres = [g for g in genre_list if g not in final_genres]
+    default_genre = selected_genres[i] if selected_genres[i] in available_genres else available_genres[0]
+
     genre = st.selectbox(
         f"Choose Genre {i+1}",
-        [g for g in genre_list if g not in selected_genres],
+        available_genres,
+        index=available_genres.index(default_genre),
         key=f"genre_{i}"
     )
-    selected_genres.append(genre)
+    final_genres.append(genre)
+
+selected_genres = final_genres
 
 # Recommend button
 if st.button("Recommend"):
     # Update query params in the URL
-    st.query_params["genre"] = selected_genres  
+    st.query_params["genre"] = selected_genres
+    rerun()
 
-query_params = st.query_params
-url_genre = []
 if "genre" in query_params:
     url_genre = query_params.get_all("genre")
 
