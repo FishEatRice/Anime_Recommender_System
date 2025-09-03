@@ -32,6 +32,9 @@ def session_state_format():
     if "genre_recommender_results" not in st.session_state:
         st.session_state.genre_recommender_results = pd.DataFrame()
 
+    if "genre_recommender_selected" not in st.session_state:
+        st.session_state.genre_recommender_selected = ""
+
     # Where am I
     if "where_page" not in st.session_state:
         st.session_state.where_page = "main"
@@ -52,6 +55,8 @@ def session_state_reset_anime_genre():
     if st.session_state.where_page != "anime_genre_recommender_page":
         st.session_state.genre_recommender_result_page = 0
         st.session_state.genre_recommender_results = pd.DataFrame()
+        st.session_state.genre_recommender_selected = ""        
 
 def session_check_where():
     session_state_reset_anime_title()
+    session_state_reset_anime_genre()

@@ -114,7 +114,8 @@ else:
 if url_genre:
     selected_genres = url_genre
 
-if run_genre_recommender == 1:
+if run_genre_recommender == 1 and st.session_state.genre_recommender_selected != selected_genres:
+    st.session_state.genre_recommender_selected = selected_genres
     st.session_state.genre_recommender_result_page = 0
     st.session_state.genre_recommender_results = recommend(
         df,
@@ -123,6 +124,8 @@ if run_genre_recommender == 1:
         filter_rating=st.session_state.get('filter_rating', 0.0)
     )
 
+if not st.session_state.genre_recommender_results.empty:
+    
     results = st.session_state.genre_recommender_results
 
     per_page = st.session_state.get('recommended_count', 9)
