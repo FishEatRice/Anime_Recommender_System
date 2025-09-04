@@ -5,9 +5,9 @@ Google Drive Center:
 https://drive.google.com/drive/folders/1MJIW1NkbF7bHvTI9YXpyeFMPB19cgayj?usp=drive_link
 
 Anime_data.csv from: 
-https://www.kaggle.com/datasets/trijalvijaykhade/all-anime-details?resource=download&select=anime_400_cleaned.csv
-https://www.kaggle.com/datasets/marlesson/myanimelist-dataset-animes-profiles-reviews/data?select=reviews.csv
+https://www.kaggle.com/datasets/marlesson/myanimelist-dataset-animes-profiles-reviews/data?select=animes.csv
 
+Guilde
 https://chatgpt.com/s/t_68b8f92afc7481919456dc5cf28ddc7f
 
 # Plan/Mission:
