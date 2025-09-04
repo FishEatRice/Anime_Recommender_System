@@ -8,6 +8,8 @@ Anime_data.csv from:
 https://www.kaggle.com/datasets/trijalvijaykhade/all-anime-details?resource=download&select=anime_400_cleaned.csv
 https://www.kaggle.com/datasets/marlesson/myanimelist-dataset-animes-profiles-reviews/data?select=reviews.csv
 
+https://chatgpt.com/s/t_68b8f92afc7481919456dc5cf28ddc7f
+
 # Plan/Mission:
 - Pandas 
 
