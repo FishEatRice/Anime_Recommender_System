@@ -135,57 +135,63 @@ elif page == "Item-Based Collaborative Filtering":
 
             if reviews.empty:
                 st.error("No valid review data found after title mapping.")
-                st.stop()
+            
+            else:
+            
+                reviews['rating'] = pd.to_numeric(reviews['rating'], errors='coerce')
+    
+                anime_user_matrix = reviews.pivot_table(
+                    index='title', columns='profile', values='rating'
+                ).fillna(0)
+    
+                if anime_user_matrix.empty:
+                    st.error("Not enough data to compute similarities.")
+                
+                else:
+    
+                    anime_similarity = cosine_similarity(anime_user_matrix)
+                    anime_similarity_df = pd.DataFrame(
+                        anime_similarity,
+                        index=anime_user_matrix.index,
+                        columns=anime_user_matrix.index
+                    )
+        
+                    if anime_selected not in anime_similarity_df.index:
+                        st.warning("Anime title not found in data.")
+                        st.write(pd.DataFrame(columns=["title", "similarity", "genre", "score", "synopsis", "link"]))
 
-            reviews['rating'] = pd.to_numeric(reviews['rating'], errors='coerce')
-
-            anime_user_matrix = reviews.pivot_table(
-                index='title', columns='profile', values='rating'
-            ).fillna(0)
-
-            if anime_user_matrix.empty:
-                st.error("Not enough data to compute similarities.")
-                st.stop()
-
-            anime_similarity = cosine_similarity(anime_user_matrix)
-            anime_similarity_df = pd.DataFrame(
-                anime_similarity,
-                index=anime_user_matrix.index,
-                columns=anime_user_matrix.index
-            )
-
-            if anime_selected not in anime_similarity_df.index:
-                st.warning("Anime title not found in data.")
-                st.write(pd.DataFrame(columns=["title", "similarity", "genre", "score", "synopsis", "link"]))
-                st.stop()
-
-            sim_scores = anime_similarity_df[anime_selected].sort_values(ascending=False)
-            sim_scores = sim_scores.drop(anime_selected)
-
-            top = sim_scores.head(st.session_state.recommended_count + 1).reset_index()
-            top.columns = ["title", "similarity"]
-
-            available_cols = [c for c in ['title', 'genre', 'score', 'synopsis', 'link'] if c in animes.columns]
-            anime_info = animes[available_cols].drop_duplicates(subset="title")
-
-            result = top.merge(anime_info, on="title", how="left")
-
-            result.rename(columns={
-                'title': 'Title',
-                'genre': 'Genre',
-                'score': 'Rating',
-                'link': 'Link',
-                'similarity': 'Similarity'
-            }, inplace=True)
-
-            st.session_state.title_recommender_anime_select_details = animes[animes['title'] == anime_selected].rename(columns={
-                'title': 'Title',
-                'score': 'Rating',
-                'link': 'Link',
-                'genre': 'Genre'
-            })
-
-            st.session_state.title_recommender_results = result
-            st.session_state.title_recommender_result_page = 0
+                    else:
+                    
+                        sim_scores = anime_similarity_df[anime_selected].sort_values(ascending=False)
+                        sim_scores = sim_scores.drop(anime_selected)
+            
+                        top = sim_scores.head(st.session_state.recommended_count + 1).reset_index()
+                        top.columns = ["title", "similarity"]
+            
+                        available_cols = [c for c in ['title', 'genre', 'score', 'synopsis', 'link'] if c in animes.columns]
+                        anime_info = animes[available_cols].drop_duplicates(subset="title")
+            
+                        result = top.merge(anime_info, on="title", how="left")
+            
+                        result.rename(columns={
+                            'title': 'Title',
+                            'genre': 'Genre',
+                            'score': 'Rating',
+                            'link': 'Link',
+                            'similarity': 'Similarity'
+                        }, inplace=True)
+            
+                        st.session_state.title_recommender_anime_select_details = animes[animes['title'] == anime_selected].rename(columns={
+                            'title': 'Title',
+                            'score': 'Rating',
+                            'link': 'Link',
+                            'genre': 'Genre'
+                        })
+            
+                        st.session_state.title_recommender_results = result
+                        st.session_state.title_recommender_result_page = 0
 
         display_title_based_recommendations()
+
+        st.set_option('client.showErrorDetails', True)
+
