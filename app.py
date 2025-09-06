@@ -6,9 +6,6 @@ import requests
 from bs4 import BeautifulSoup
 from streamlit.commands.execution_control import rerun
 
-st.set_option('client.showErrorDetails', True)
-
-
 @st.cache_data
 def load_data():
     reviews = pd.read_csv("data/reviews.csv", encoding="ISO-8859-1")
@@ -26,6 +23,9 @@ def session_state_format():
 
     if 'title_recommender_result_page' not in st.session_state:
         st.session_state.title_recommender_result_page = 0
+
+    if 'title_recommender_anime_select_details' not in st.session_state:
+        st.session_state.title_recommender_anime_select_details = ""
 
 def get_anime_picture(url):
     try:
