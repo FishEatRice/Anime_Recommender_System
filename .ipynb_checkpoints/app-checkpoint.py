@@ -5,12 +5,17 @@ import numpy as np
 # ---- Sidebar Navigation ----
 st.sidebar.title("🎬 Anime Recommender System")
 page = st.sidebar.radio("Choose a module:", 
-                        ["Collaborative Filtering", 
+                        ["Main Page",
+                         "Collaborative Filtering", 
                          "Content-Based Filtering", 
                          "Evaluation Metrics"])
 
+if page == "Main Page":
+    st.title("Welcome to Anime Recommender System")
+
+
 # ---- Collaborative Filtering ----
-if page == "Collaborative Filtering":
+elif page == "Collaborative Filtering":
     st.title("👥 Collaborative Filtering Recommender")
 
     # Example: user input
