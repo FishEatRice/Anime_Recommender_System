@@ -6,6 +6,9 @@ import requests
 from bs4 import BeautifulSoup
 from streamlit.commands.execution_control import rerun
 
+st.set_option('client.showErrorDetails', True)
+
+
 @st.cache_data
 def load_data():
     reviews = pd.read_csv("data/reviews.csv", encoding="ISO-8859-1")
@@ -192,6 +195,3 @@ elif page == "Item-Based Collaborative Filtering":
                         st.session_state.title_recommender_result_page = 0
 
         display_title_based_recommendations()
-
-        st.set_option('client.showErrorDetails', True)
-
