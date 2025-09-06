@@ -1,0 +1,7 @@
+streamlit
+scikit-learn
+fuzzywuzzy
+pandas
+numpy
+sklearn
+requests
