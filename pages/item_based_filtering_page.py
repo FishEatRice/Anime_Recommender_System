@@ -45,8 +45,8 @@ if recommend_clicked:
     )
 
 if (
-    st.session_state.item_based_results == "404 ERROR"
-    or st.session_state.item_based_anime_select_details == "404 ERROR"
+    st.session_state.item_based_results.empty
+    or st.session_state.item_based_anime_select_details.empty
 ):
     st.error("Anime details not found.")
 
