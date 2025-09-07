@@ -28,9 +28,7 @@ def item_based_filtering_recommend(df_animes, df_reviews, selected_anime):
     )
 
     if selected_anime_uid not in df_cosine_animes_similarity.columns:
-        recommend_result = "404 ERROR"
-        selected_anime_details = "404 ERROR"
-        return recommend_result, selected_anime_details
+        return "404 ERROR", "404 ERROR"
     
     # Get similarity scores for the selected anime
     sim_scores = df_cosine_animes_similarity[selected_anime_uid]
