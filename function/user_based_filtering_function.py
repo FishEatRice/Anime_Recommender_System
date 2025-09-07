@@ -21,7 +21,7 @@ def user_based_filtering_recommend(df_animes, df_reviews, selected_anime):
         values='rating'
     ).fillna(0)
 
-    if selected_anime_uid not in df_user_matrix.index:
+    if selected_anime_uid not in df_user_matrix.columns:
         return pd.DataFrame(), pd.DataFrame()
 
     # Compute cosine similarity between animes
@@ -38,7 +38,7 @@ def user_based_filtering_recommend(df_animes, df_reviews, selected_anime):
     
     target_user_self = target_users[0]
 
-    if target_user_self not in df_cosine_users_similarity.columns:
+    if target_user_self not in df_cosine_users_similarity.index:
         return "No user rated this anime", selected_anime_details
     
     sim_scores = df_cosine_users_similarity[target_user_self].sort_values(ascending=False)
