@@ -12,3 +12,4 @@ session_check_where()
 df_animes, df_reviews = load_data()
 
 scroll_to_here(0, key="top")
+
