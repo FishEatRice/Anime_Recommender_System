@@ -49,7 +49,6 @@ def display_title_based_recommendations():
     link = selected['Link']
     rating = 0.0 if pd.isna(selected['Rating']) else selected['Rating']
     genre = selected['Genre']
-    similarity_score = selected.get('Similarity', 0.0)
 
     if 'fast_search' not in st.session_state:
         st.session_state.fast_search = False
@@ -62,7 +61,6 @@ def display_title_based_recommendations():
         with col4:
             st.markdown(f"[{title}]({link})")
             st.write(f"⭐ {rating:.2f} / 10.0")
-            st.write(f"Similarity: {similarity_score:.3f}")
             cleaned_genre = str(genre).strip("[]").replace("'", "").strip()
             st.caption(cleaned_genre)
 
