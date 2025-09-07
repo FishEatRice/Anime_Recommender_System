@@ -29,7 +29,7 @@ with col1:
 
 with col2:
     st.markdown("<div style='padding-top: 28px'></div>", unsafe_allow_html=True)
-    recommend_clicked = st.button("Recommend")
+    recommend_clicked = st.button("Recommend", key="recommend_btn")
 
 if recommend_clicked:
 
