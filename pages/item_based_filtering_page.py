@@ -48,7 +48,7 @@ if (
     st.session_state.item_based_results.empty
     or st.session_state.item_based_anime_select_details.empty
 ):
-    st.error("Anime details not found.")
+    st.error("Please click recommend button one more time or Anime details not found.")
 
 elif (
     not st.session_state.item_based_anime_select_details.empty 
