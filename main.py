@@ -7,7 +7,7 @@ pages = {
         st.Page("pages/user_based_filtering_page.py", title="User-Based Collaborative Filtering"),
     ],
     "🔍Content-Filtering": [
-        st.Page("pages/content_based_filtering_page.py", title="Content-Based Collaborative Filtering"),
+        st.Page("pages/content_based_filtering_page.py", title="Content-Based"),
     ],
     "📊Evaluation Metrics": [
         st.Page("pages/Precision_Recall_F1_page.py", title="Precision & Recall & F1 Value"),

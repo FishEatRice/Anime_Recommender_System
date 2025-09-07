@@ -5,7 +5,7 @@ from streamlit_scroll_to_top import scroll_to_here
 import pandas as pd
 from function.content_based_filtering_function import content_based_filtering_recommend
 
-st.title("Content Based Filtering")
+st.title("Content-Based")
 
 session_state_format()
 st.session_state.where_page = "content_based_page"
