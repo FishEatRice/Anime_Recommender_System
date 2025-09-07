@@ -50,11 +50,10 @@ if (
 ):
     st.error("Please click recommend button one more time or Anime details not found.")
 
-elif (
-    not st.session_state.user_based_anime_select_details.empty 
-    and st.session_state.user_based_anime_select_details.iloc[0]['title'] == selected_anime
-):
-    if not st.session_state.user_based_results.empty and not st.session_state.user_based_anime_select_details.empty:
+else:
+    details = st.session_state.user_based_anime_select_details.iloc[0]
+    
+    if details['title'] == selected_anime:
 
         user_based_anime_select_details = st.session_state.user_based_anime_select_details
         

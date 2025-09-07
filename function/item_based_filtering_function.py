@@ -9,8 +9,10 @@ def item_based_filtering_recommend(df_animes, df_reviews, selected_anime):
 
     # Find the selected anime details
     selected_anime_details = df_animes[df_animes['title'] == selected_anime]
+    if selected_anime_details.empty:
+        return pd.DataFrame(), pd.DataFrame()
+
     selected_anime_uid = selected_anime_details['uid'].values[0]
-    selected_anime_details = selected_anime_details.drop_duplicates(subset="title")
 
     # Create a user-item matrix
     df_reviews_matrix = df_reviews.pivot_table(
@@ -18,6 +20,9 @@ def item_based_filtering_recommend(df_animes, df_reviews, selected_anime):
         columns='profile', 
         values='rating'
     ).fillna(0)
+
+    if selected_anime_uid not in df_reviews_matrix.index:
+        return pd.DataFrame(), pd.DataFrame()
     
     # Compute cosine similarity between animes
     cosine_animes_similarity = cosine_similarity(df_reviews_matrix)
@@ -26,13 +31,9 @@ def item_based_filtering_recommend(df_animes, df_reviews, selected_anime):
         index=df_reviews_matrix.index,
         columns=df_reviews_matrix.index
     )
-
-    if selected_anime_uid not in df_cosine_animes_similarity.columns:
-        return "404 ERROR", "404 ERROR"
     
     # Get similarity scores for the selected anime
     sim_scores = df_cosine_animes_similarity[selected_anime_uid]
-    sim_scores = sim_scores.sort_values(ascending=False)
     sim_scores = sim_scores.drop(selected_anime_uid)
 
     # Filter available columns for recommendations
@@ -44,6 +45,8 @@ def item_based_filtering_recommend(df_animes, df_reviews, selected_anime):
 
     # Map similarity scores to the anime UID column
     recommend_result['similarity'] = recommend_result['uid'].map(sim_scores)
+
+    recommend_result = recommend_result.dropna(subset=['similarity'])
 
     # Sort by similarity
     recommend_result = recommend_result.sort_values(by='similarity', ascending=False)

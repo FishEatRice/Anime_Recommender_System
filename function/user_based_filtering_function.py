@@ -6,11 +6,13 @@ def user_based_filtering_recommend(df_animes, df_reviews, selected_anime):
     df_reviews['rating'] = pd.to_numeric(df_reviews['rating'], errors='coerce')
     df_reviews['anime_uid'] = pd.to_numeric(df_reviews['anime_uid'], errors='coerce')
     df_reviews['rating'] = df_reviews['rating'].fillna(0)
-
+    
     # Find the selected anime details
     selected_anime_details = df_animes[df_animes['title'] == selected_anime]
+    if selected_anime_details.empty:
+        return pd.DataFrame(), pd.DataFrame()
+
     selected_anime_uid = selected_anime_details['uid'].values[0]
-    selected_anime_details = selected_anime_details.drop_duplicates(subset="title")
 
     # Create a user-item matrix
     df_user_matrix = df_reviews.pivot_table(
@@ -18,6 +20,9 @@ def user_based_filtering_recommend(df_animes, df_reviews, selected_anime):
         columns='anime_uid', 
         values='rating'
     ).fillna(0)
+
+    if selected_anime_uid not in df_user_matrix.index:
+        return pd.DataFrame(), pd.DataFrame()
 
     # Compute cosine similarity between animes
     cosine_users_similarity = cosine_similarity(df_user_matrix)
