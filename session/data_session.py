@@ -29,6 +29,16 @@ def session_state_format():
     if "user_based_anime_select_details" not in st.session_state:
         st.session_state.user_based_anime_select_details = pd.DataFrame()
 
+    # Content Based Recommender Result Page
+    if "content_based_result_page" not in st.session_state:
+        st.session_state.content_based_result_page = 0
+
+    if "content_based_results" not in st.session_state:
+        st.session_state.content_based_results = pd.DataFrame()
+
+    if "user_input" not in st.session_state:
+        st.session_state.user_input = ""
+
     # Where am I
     if "where_page" not in st.session_state:
         st.session_state.where_page = "Null"
@@ -42,3 +52,7 @@ def session_check_where():
         st.session_state.user_based_result_page = 0
         st.session_state.user_based_results = pd.DataFrame()
         st.session_state.user_based_anime_select_details = pd.DataFrame()
+    if st.session_state.where_page != "content_based_page":
+        st.session_state.content_based_result_page = 0
+        st.session_state.content_based_results = pd.DataFrame()
+        st.session_state.user_input = ""

@@ -113,7 +113,7 @@ else:
                     st.markdown(f"[{row['title']}]({row['link']})")
                     st.write(f"⭐ {row['score']:.2f} / 10.0")
                     st.write(f"Similarity: {row['similarity']:.2f}")
-                    genre_text = str(genre).strip("[]").replace("'", "").strip().replace(", ", " | ")
+                    genre_text = str(row['genre']).strip("[]").replace("'", "").strip().replace(", ", " | ")
                     st.caption(genre_text)
             st.markdown("---")
 
