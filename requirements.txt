@@ -1,7 +1,7 @@
-streamlit
-pandas
-numpy
-scikit-learn
-requests
-beautifulsoup4
-streamlit-scroll-to-top
+pip install streamlit
+pip install pandas
+pip install numpy
+pip install scikit-learn
+pip install requests
+pip install beautifulsoup4
+pip install streamlit-scroll-to-top
