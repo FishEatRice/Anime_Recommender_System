@@ -17,6 +17,12 @@ scroll_to_here(0, key="top")
 
 anime_list = df_animes['title'].dropna().unique()
 
+def prev_page():
+    st.session_state.item_based_result_page -= 1
+
+def next_page():
+    st.session_state.item_based_result_page += 1
+
 col1, col2 = st.columns([4, 1])
 with col1:
     selected_anime = st.selectbox("Choose One Anime", anime_list)
@@ -39,6 +45,8 @@ if recommend_clicked:
     )
 
 if not st.session_state.item_based_results.empty and not st.session_state.item_based_anime_select_details.empty:
+
+    data_item_based_result_page = st.session_state.item_based_result_page
 
     item_based_anime_select_details = st.session_state.item_based_anime_select_details
     
@@ -103,9 +111,7 @@ if not st.session_state.item_based_results.empty and not st.session_state.item_b
     col5, col6, col7 = st.columns([1, 2, 1])
     with col5:
         if st.session_state.item_based_result_page > 0:
-            if st.button("⬅️ Previous Page"):
-                st.session_state.item_based_result_page -= 1
-
+            st.button("⬅️ Previous Page", on_click=prev_page, key="prev_btn")
         else:
             st.write("")
 
@@ -114,10 +120,7 @@ if not st.session_state.item_based_results.empty and not st.session_state.item_b
 
     with col7:
         if end < len(title_recommender_results):
-            if st.button("Next Page ➡️"):
-                st.session_state.item_based_result_page += 1
+            st.button("Next Page ➡️", on_click=next_page, key="next_btn")
 
         else:
             st.write("")
-
-st.session_state.item_based_result_page += 1
