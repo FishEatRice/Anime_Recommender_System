@@ -1,6 +1,5 @@
 import pandas as pd
 import requests
-import ast
 from bs4 import BeautifulSoup
 
 def load_data(animes_path="data/animes.csv", reviews_path="data/reviews.csv"):

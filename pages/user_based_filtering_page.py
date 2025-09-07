@@ -38,8 +38,6 @@ if recommend_clicked:
         selected_anime
     )
 
-st.write(st.session_state.user_based_results)
-
 if not st.session_state.user_based_results.empty and not st.session_state.user_based_anime_select_details.empty:
 
     user_based_anime_select_details = st.session_state.user_based_anime_select_details
