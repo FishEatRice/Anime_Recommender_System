@@ -1,54 +1,85 @@
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 
-def item_based_filtering_recommend(df_animes, df_reviews, selected_anime):
-    # Ensure proper numeric conversion for ratings and anime_uid
-    df_reviews['rating'] = pd.to_numeric(df_reviews['rating'], errors='coerce')
-    df_reviews['anime_uid'] = pd.to_numeric(df_reviews['anime_uid'], errors='coerce')
-    df_reviews['rating'] = df_reviews['rating'].fillna(0)
+def item_based_filtering_recommend(df_animes, df_reviews, selected_animes):
+    # 确保 selected_animes 是列表
+    if isinstance(selected_animes, str):
+        selected_animes = [selected_animes]
 
-    # Find the selected anime details
-    selected_anime_details = df_animes[df_animes['title'] == selected_anime]
-    if selected_anime_details.empty:
-        return pd.DataFrame(), pd.DataFrame()
+    all_recommendations = []
+    all_selected_details = []
 
-    selected_anime_uid = selected_anime_details['uid'].values[0]
+    for selected_anime in selected_animes:
+        # 确保评分是数值型
+        df_reviews['rating'] = pd.to_numeric(df_reviews['rating'], errors='coerce')
+        df_reviews['anime_uid'] = pd.to_numeric(df_reviews['anime_uid'], errors='coerce')
+        df_reviews['rating'] = df_reviews['rating'].fillna(0)
 
-    # Create a user-item matrix
-    df_reviews_matrix = df_reviews.pivot_table(
-        index='anime_uid', 
-        columns='profile', 
-        values='rating'
-    ).fillna(0)
+        # 找到被选 anime 的信息
+        selected_anime_details = df_animes[df_animes['title'] == selected_anime]
+        if selected_anime_details.empty:
+            continue
 
-    if selected_anime_uid not in df_reviews_matrix.index:
-        return pd.DataFrame(), pd.DataFrame()
-    
-    # Compute cosine similarity between animes
-    cosine_animes_similarity = cosine_similarity(df_reviews_matrix)
-    df_cosine_animes_similarity = pd.DataFrame(
-        cosine_animes_similarity,
-        index=df_reviews_matrix.index,
-        columns=df_reviews_matrix.index
-    )
-    
-    # Get similarity scores for the selected anime
-    sim_scores = df_cosine_animes_similarity[selected_anime_uid]
-    sim_scores = sim_scores.drop(selected_anime_uid)
+        selected_anime_uid = selected_anime_details['uid'].values[0]
+        all_selected_details.append(selected_anime_details)
 
-    # Filter available columns for recommendations
-    available_cols = ['uid','title', 'genre', 'score', 'synopsis', 'link', 'similarity']
-    available_cols = [c for c in available_cols if c in df_animes.columns]
+        # 用户-物品矩阵
+        df_reviews_matrix = df_reviews.pivot_table(
+            index='anime_uid',
+            columns='profile',
+            values='rating'
+        ).fillna(0)
 
-    # Merge the similarity scores with anime details
-    recommend_result = df_animes[available_cols].drop_duplicates(subset="title")
+        if selected_anime_uid not in df_reviews_matrix.index:
+            continue
 
-    # Map similarity scores to the anime UID column
-    recommend_result['similarity'] = recommend_result['uid'].map(sim_scores)
+        # 物品相似度
+        cosine_animes_similarity = cosine_similarity(df_reviews_matrix)
+        df_cosine_animes_similarity = pd.DataFrame(
+            cosine_animes_similarity,
+            index=df_reviews_matrix.index,
+            columns=df_reviews_matrix.index
+        )
 
-    recommend_result = recommend_result.dropna(subset=['similarity'])
+        # 取相似度分数
+        sim_scores = df_cosine_animes_similarity[selected_anime_uid]
+        sim_scores = sim_scores.drop(selected_anime_uid)
 
-    # Sort by similarity
-    recommend_result = recommend_result.sort_values(by='similarity', ascending=False)
+        # 推荐结果
+        available_cols = ['uid', 'title', 'genre', 'score', 'synopsis', 'link']
+        available_cols = [c for c in available_cols if c in df_animes.columns]
 
-    return recommend_result, selected_anime_details
+        recommend_result = df_animes[available_cols].drop_duplicates(subset="title")
+        recommend_result['similarity'] = recommend_result['uid'].map(sim_scores)
+        recommend_result = recommend_result.dropna(subset=['similarity'])
+        recommend_result = recommend_result.sort_values(by='similarity', ascending=False)
+
+        all_recommendations.append(recommend_result)
+
+    # === Intersection 模式 ===
+    if all_recommendations:
+        final_recommendations = all_recommendations[0]
+        for rec in all_recommendations[1:]:
+            # 取交集（只保留同时出现的）
+            final_recommendations = final_recommendations.merge(
+                rec,
+                on=['uid', 'title', 'genre', 'score', 'synopsis', 'link'],
+                suffixes=("", "_y")
+            )
+            # 合并 similarity，取平均
+            final_recommendations['similarity'] = (
+                final_recommendations[['similarity', 'similarity_y']].min(axis=1)
+            )
+            final_recommendations = final_recommendations.drop(columns=['similarity_y'])
+
+        final_recommendations = final_recommendations.sort_values(by="similarity", ascending=False)
+    else:
+        final_recommendations = pd.DataFrame()
+
+    # 用户选择的动漫信息
+    if all_selected_details:
+        all_selected_details = pd.concat(all_selected_details).drop_duplicates(subset="uid")
+    else:
+        all_selected_details = pd.DataFrame()
+
+    return final_recommendations, all_selected_details

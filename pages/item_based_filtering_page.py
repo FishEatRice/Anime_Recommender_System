@@ -25,7 +25,7 @@ def next_page():
 
 col1, col2 = st.columns([4, 1])
 with col1:
-    selected_anime = st.selectbox("Choose One Anime", anime_list)
+    selected_anime = st.multiselect("Choose one or more Animes", anime_list)
 
 with col2:
     st.markdown("<div style='padding-top: 28px'></div>", unsafe_allow_html=True)
@@ -52,43 +52,37 @@ if (
 
 else:
     details = st.session_state.item_based_anime_select_details.iloc[0]
-    
-    if details['title'] == selected_anime:
+
+    if details['title'] in selected_anime:
 
         data_item_based_result_page = st.session_state.item_based_result_page
 
-        item_based_anime_select_details = st.session_state.item_based_anime_select_details
-        
-        title = item_based_anime_select_details.iloc[0]['title']
-        genre = item_based_anime_select_details.iloc[0]['genre']
-        rating = item_based_anime_select_details.iloc[0]['score']
-        synopsis = item_based_anime_select_details.iloc[0]['synopsis']
-        link = item_based_anime_select_details.iloc[0]['link']
+        for _, details in st.session_state.item_based_anime_select_details.iterrows():
+            if details['title'] in selected_anime:
+                title = details['title']
+                genre = details['genre']
+                rating = details['score']
+                synopsis = details['synopsis']
+                link = details['link']
 
-        if st.session_state.fast_search != True:
-            col3, col4 = st.columns([1,3])
-            
-            with col3:
-                img_url = get_anime_picture(link)
-                if img_url:
-                    st.image(img_url, width=150)
+                if st.session_state.fast_search != True:
+                    col3, col4 = st.columns([1,3])
+                    with col3:
+                        img_url = get_anime_picture(link)
+                        if img_url:
+                            st.image(img_url, width=150)
+                    with col4:
+                        st.markdown(f"[{title}]({link})")
+                        st.write(f"⭐ {rating:.2f} / 10.0")
+                        genre_text = str(genre).strip("[]").replace("'", "").replace(", ", " | ")
+                        st.caption(genre_text)
+                else:
+                    st.markdown(f"[{title}]({link})")
+                    st.write(f"⭐ {rating:.2f} / 10.0")
+                    genre_text = str(genre).strip("[]").replace("'", "").replace(", ", " | ")
+                    st.caption(genre_text)
 
-            with col4:
-                st.write("")
-                st.write("")
-                st.write("")
-                st.markdown(f"[{title}]({link})")
-                st.write(f"⭐ {rating:.2f} / 10.0")
-                genre_text = str(genre).strip("[]").replace("'", "").strip().replace(", ", " | ")
-                st.caption(genre_text)
-
-        else:
-            st.markdown(f"[{title}]({link})")
-            st.write(f"⭐ {rating:.2f} / 10.0")
-            genre_text = str(genre).strip("[]").replace("'", "").strip().replace(", ", " | ")
-            st.caption(genre_text)
-            
-        st.markdown("---")
+                st.markdown("---")
 
         per_page = st.session_state.get('recommended_count', 9)
         current_result_page = st.session_state.item_based_result_page
