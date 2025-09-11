@@ -36,25 +36,40 @@ def user_based_filtering_recommend(df_animes, df_reviews, selected_anime):
     if len(target_users) == 0:
         return "No users rated this anime", selected_anime_details
     
-    target_user_self = target_users[0]
+    all_weighted_scores = []
 
-    if target_user_self not in df_cosine_users_similarity.index:
-        return "No user rated this anime", selected_anime_details
-    
-    sim_scores = df_cosine_users_similarity[target_user_self].sort_values(ascending=False)
-    sim_scores = sim_scores.drop(target_user_self)
+    # Find all user
+    for target_user in target_users:
+        if target_user not in df_cosine_users_similarity.index:
+            continue
 
-    neighbor_ratings = df_reviews[df_reviews['profile'].isin(sim_scores.index)]
-    avg_ratings = neighbor_ratings.groupby('anime_uid')['rating'].mean()
+        # Find Top 20 User
+        sim_scores = df_cosine_users_similarity[target_user].drop(target_user)
+        top_neighbors = sim_scores.sort_values(ascending=False).head(20)
 
-    watched = df_reviews[df_reviews['profile'] == target_user_self]['anime_uid']
-    avg_ratings = avg_ratings.drop(watched, errors='ignore')
+        if top_neighbors.empty:
+            continue
+
+        neighbor_ratings = df_user_matrix.loc[top_neighbors.index]
+
+        weighted_scores = (neighbor_ratings.T.dot(top_neighbors)) / top_neighbors.sum()
+        weighted_scores = weighted_scores.dropna()
+
+        watched = df_reviews[df_reviews['profile'] == target_user]['anime_uid'].unique()
+        weighted_scores = weighted_scores.drop(watched, errors='ignore')
+
+        all_weighted_scores.append(weighted_scores)
+
+    if not all_weighted_scores:
+        return pd.DataFrame(), selected_anime_details
+
+    final_scores = pd.concat(all_weighted_scores, axis=1).mean(axis=1)
 
     available_cols = ['uid','title','genre','score','synopsis','link']
     available_cols = [c for c in available_cols if c in df_animes.columns]
 
-    recommend_result = df_animes[df_animes['uid'].isin(avg_ratings.index)][available_cols].drop_duplicates(subset="title")
-    recommend_result['predicted_score'] = recommend_result['uid'].map(avg_ratings)
+    recommend_result = df_animes[df_animes['uid'].isin(final_scores.index)][available_cols].drop_duplicates(subset="title")
+    recommend_result['predicted_score'] = recommend_result['uid'].map(final_scores)
 
     recommend_result = recommend_result.sort_values(by='predicted_score', ascending=False)
 
