@@ -8,12 +8,10 @@ def user_based_filtering_recommend(df_animes, df_reviews, selected_animes, top_k
     all_recommendations = []
     all_selected_details = []
 
-    # 数值转换
     df_reviews['rating'] = pd.to_numeric(df_reviews['rating'], errors='coerce')
     df_reviews['anime_uid'] = pd.to_numeric(df_reviews['anime_uid'], errors='coerce')
     df_reviews['rating'] = df_reviews['rating'].fillna(0)
 
-    # 用户-物品矩阵
     df_user_matrix = df_reviews.pivot_table(
         index='profile', 
         columns='anime_uid', 
@@ -28,7 +26,6 @@ def user_based_filtering_recommend(df_animes, df_reviews, selected_animes, top_k
     )
 
     for selected_anime in selected_animes:
-        # anime 详情
         selected_anime_details = df_animes[df_animes['title'] == selected_anime]
         if selected_anime_details.empty:
             continue
@@ -39,7 +36,6 @@ def user_based_filtering_recommend(df_animes, df_reviews, selected_animes, top_k
         if selected_anime_uid not in df_user_matrix.columns:
             continue
 
-        # 找出看过这个 anime 的用户
         target_users = df_reviews[df_reviews['anime_uid'] == selected_anime_uid]['profile'].unique()
         if len(target_users) == 0:
             continue
@@ -67,7 +63,6 @@ def user_based_filtering_recommend(df_animes, df_reviews, selected_animes, top_k
         if not all_weighted_scores:
             continue
 
-        # 该 anime 的预测分数（所有相关用户平均）
         final_scores = pd.concat(all_weighted_scores, axis=1).mean(axis=1)
 
         available_cols = ['uid', 'title', 'genre', 'score', 'synopsis', 'link']
@@ -79,7 +74,6 @@ def user_based_filtering_recommend(df_animes, df_reviews, selected_animes, top_k
 
         all_recommendations.append(recommend_result)
 
-    # --- 合并多个 anime 的推荐结果（Intersection + min 分数） ---
     if all_recommendations:
         final_recommendations = all_recommendations[0]
         for rec in all_recommendations[1:]:
@@ -88,7 +82,6 @@ def user_based_filtering_recommend(df_animes, df_reviews, selected_animes, top_k
                 on=['uid', 'title', 'genre', 'score', 'synopsis', 'link'],
                 suffixes=("", "_y")
             )
-            # min predicted_score (取严格交集)
             final_recommendations['predicted_score'] = final_recommendations[['predicted_score', 'predicted_score_y']].min(axis=1)
             final_recommendations = final_recommendations.drop(columns=['predicted_score_y'])
 
