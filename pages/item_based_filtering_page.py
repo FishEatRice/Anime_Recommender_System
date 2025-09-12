@@ -55,8 +55,6 @@ else:
 
     if details['title'] in selected_anime:
 
-        data_item_based_result_page = st.session_state.item_based_result_page
-
         for _, details in st.session_state.item_based_anime_select_details.iterrows():
             if details['title'] in selected_anime:
                 title = details['title']
